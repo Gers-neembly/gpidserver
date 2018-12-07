@@ -22,7 +22,7 @@ pipelines:
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
     deploy-to-dev:
       - step:
-          name: Deployto DEV-test
+          name: Deploy to DEV-test
           script:
             - echo "Manual deploy to DEV-test environment"
             - export ASPNETCORE_ENVIRONMENT="Development"
@@ -37,7 +37,7 @@ pipelines:
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR_DEVTEST builddate.txt
     deploy-to-qa:
       - step:
-          name: Deployto QA-Staging
+          name: Deploy to QA-Staging
           script:
             - echo "Manual deploy to QA-staging environment"
             - export ASPNETCORE_ENVIRONMENT="Staging"
@@ -52,7 +52,7 @@ pipelines:
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR_STAGING builddate.txt
     deploy-to-prod:
       - step:
-          name: Deployto QA-Staging
+          name: Deploy to Production-Release
           script:
             - echo "Manual deploy to PROD-release environment"
             - export ASPNETCORE_ENVIRONMENT="Release"
