@@ -1,0 +1,133 @@
+# Neembly Gaming Platform, Copyright(C) 2019
+# Pipeline build definitions
+image: microsoft/dotnet:sdk
+
+pipelines:
+  custom:
+    # manually run 
+    sonar: 
+      # This is for sonar at runtime checking
+      - step:
+          name: Runtime sonarqube testing
+          caches:
+            - dotnetcore
+          script:
+          - echo "On-demand Sonarqube checker running"
+          - export PATH="$PATH:/root/.dotnet/tools"
+          - apt-get update && apt-get install -y openjdk-8-jre
+          - dotnet tool install --global dotnet-sonarscanner
+          - chmod +x /root/.dotnet/tools/.store/dotnet-sonarscanner/4.4.2/dotnet-sonarscanner/4.4.2/tools/netcoreapp2.1/any/sonar-scanner-3.2.0.1227/bin/sonar-scanner
+          - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
+          - dotnet build
+          - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
+    deploy-to-dev:
+      - step:
+          name: Deployto DEV-test
+          script:
+            - echo "Manual deploy to DEV-test environment"
+            - export ASPNETCORE_ENVIRONMENT="Development"
+            - dotnet restore
+            - dotnet build $PROJECT_NAME --configuration Debug 
+            - dotnet publish $PROJECT_NAME --configuration Debug 
+            - apt-get update && apt-get -qq install ncftp
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR_DEVTEST $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - cd $DB_PROJECT_DIR
+            - dotnet ef database update
+            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR_DEVTEST builddate.txt
+    deploy-to-qa:
+      - step:
+          name: Deployto QA-Staging
+          script:
+            - echo "Manual deploy to QA-staging environment"
+            - export ASPNETCORE_ENVIRONMENT="Staging"
+            - dotnet restore
+            - dotnet build $PROJECT_NAME --configuration Staging 
+            - dotnet publish $PROJECT_NAME --configuration Staging 
+            - apt-get update && apt-get -qq install ncftp
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_ROOTDIR_STAGING $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - cd $DB_PROJECT_DIR
+            - dotnet ef database update
+            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR_STAGING builddate.txt
+    deploy-to-prod:
+      - step:
+          name: Deployto QA-Staging
+          script:
+            - echo "Manual deploy to PROD-release environment"
+            - export ASPNETCORE_ENVIRONMENT="Release"
+            - dotnet restore
+            - dotnet build $PROJECT_NAME --configuration Release 
+            - dotnet publish $PROJECT_NAME --configuration Release 
+            - apt-get update && apt-get -qq install ncftp
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR_PROD $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - cd $DB_PROJECT_DIR
+            - dotnet ef database update
+            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR_PROD builddate.txt
+  default:
+    # task per ticket item build
+    - step:
+        caches:
+          - dotnetcore
+        script: 
+          - echo "task branch push deploy"
+          - echo "On-host Sonarqube check"
+          - export PATH="$PATH:/root/.dotnet/tools"
+          - apt-get update && apt-get install -y openjdk-8-jre
+          - dotnet tool install --global dotnet-sonarscanner
+          - chmod +x /root/.dotnet/tools/.store/dotnet-sonarscanner/4.4.2/dotnet-sonarscanner/4.4.2/tools/netcoreapp2.1/any/sonar-scanner-3.2.0.1227/bin/sonar-scanner
+          - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
+          - dotnet build
+          - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY    
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Debug
+  branches:
+   master:
+    # master push-merge build 
+    - step:
+        name: Deploy to test
+        deployment: test
+        caches:
+          - dotnetcore
+        script: 
+          - echo "Development deploy"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Debug
+          - echo "Select pipeline deploy-to-dev to promote DEV environment manually"
+   staging:
+    # staging push-merge build 
+        - step:
+            name: Deploy to staging
+            deployment: staging
+            script: 
+            - echo "Auto Deployment CI/CD to QA-staging environment"
+            - export ASPNETCORE_ENVIRONMENT="Staging"
+            - dotnet restore
+            - dotnet build $PROJECT_NAME --configuration Staging 
+            - dotnet publish $PROJECT_NAME --configuration Staging 
+            - apt-get update && apt-get -qq install ncftp
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_ROOTDIR_STAGING $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - cd $DB_PROJECT_DIR
+            - dotnet ef database update
+            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_DEPLOYDIR_STAGING builddate.txt
+   production:
+    # production push-merge build 
+       - step:
+            name: Deploy to production
+            deployment: production
+            caches:
+              - dotnetcore
+            script: 
+            - echo "Auto Deployment CI/CD to PROD-release environment"
+            - export ASPNETCORE_ENVIRONMENT="Release"
+            - dotnet restore
+            - dotnet build $PROJECT_NAME --configuration Release 
+            - dotnet publish $PROJECT_NAME --configuration Release 
+            - apt-get update && apt-get -qq install ncftp
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR_PROD $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - cd $DB_PROJECT_DIR
+            - dotnet ef database update
+            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR_PROD builddate.txt

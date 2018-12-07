@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Neembly.GPIDServer.Application", "Neembly.GPIDServer.Application", "{C47D9E94-6414-4F79-9E20-2F4DE9576FD6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neembly.GPIDServer.WebAPI", "Neembly.GPIDServer.WebAPI\Neembly.GPIDServer.WebAPI.csproj", "{8C845D6D-9C16-4F84-BCCC-0F916178DD37}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Neembly.GPIDServer.Database", "Neembly.GPIDServer.Database", "{510EAA41-BFBC-4950-B963-A0AA7847FD45}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neembly.GPIDServer.Persistence", "Neembly.GPIDServer.Persistence\Neembly.GPIDServer.Persistence.csproj", "{BDBE89CD-9AB3-4B97-BB99-CE65B9518279}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Neembly.GPIDServer.Common", "Neembly.GPIDServer.Common", "{A035BFB7-0AD8-42C8-AD32-0B5DF81A2D7A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neembly.GPIDServer.SharedClasses", "Neembly.GPIDServer.SharedClasses\Neembly.GPIDServer.SharedClasses.csproj", "{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Staging|Any CPU = Staging|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8C845D6D-9C16-4F84-BCCC-0F916178DD37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C845D6D-9C16-4F84-BCCC-0F916178DD37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C845D6D-9C16-4F84-BCCC-0F916178DD37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C845D6D-9C16-4F84-BCCC-0F916178DD37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C845D6D-9C16-4F84-BCCC-0F916178DD37}.Staging|Any CPU.ActiveCfg = Staging|Any CPU
+		{8C845D6D-9C16-4F84-BCCC-0F916178DD37}.Staging|Any CPU.Build.0 = Staging|Any CPU
+		{BDBE89CD-9AB3-4B97-BB99-CE65B9518279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDBE89CD-9AB3-4B97-BB99-CE65B9518279}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDBE89CD-9AB3-4B97-BB99-CE65B9518279}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDBE89CD-9AB3-4B97-BB99-CE65B9518279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDBE89CD-9AB3-4B97-BB99-CE65B9518279}.Staging|Any CPU.ActiveCfg = Staging|Any CPU
+		{BDBE89CD-9AB3-4B97-BB99-CE65B9518279}.Staging|Any CPU.Build.0 = Staging|Any CPU
+		{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA}.Staging|Any CPU.ActiveCfg = Staging|Any CPU
+		{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA}.Staging|Any CPU.Build.0 = Staging|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8C845D6D-9C16-4F84-BCCC-0F916178DD37} = {C47D9E94-6414-4F79-9E20-2F4DE9576FD6}
+		{BDBE89CD-9AB3-4B97-BB99-CE65B9518279} = {510EAA41-BFBC-4950-B963-A0AA7847FD45}
+		{2BE8BC9F-5B7E-4A13-A4E4-DCD70EBE5BAA} = {A035BFB7-0AD8-42C8-AD32-0B5DF81A2D7A}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {360FE2A0-18EA-4652-9BC2-704EB76C5E16}
+	EndGlobalSection
+EndGlobal

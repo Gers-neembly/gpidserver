@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=127.0.0.1;Port=9099;Username=postgres;Password=n1mbl3;Database=gpidentityserver;"
+  }
+}
