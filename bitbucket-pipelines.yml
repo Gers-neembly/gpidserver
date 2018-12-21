@@ -15,7 +15,7 @@ pipelines:
           - echo "On-demand Sonarqube checker running"
           - export PATH="$PATH:/root/.dotnet/tools"
           - apt-get update && apt-get install -y openjdk-8-jre
-          - dotnet tool install --global dotnet-sonarscanner
+          - dotnet tool install --global dotnet-sonarscanner --version 4.4.2
           - chmod +x /root/.dotnet/tools/.store/dotnet-sonarscanner/4.4.2/dotnet-sonarscanner/4.4.2/tools/netcoreapp2.1/any/sonar-scanner-3.2.0.1227/bin/sonar-scanner
           - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
           - dotnet build
@@ -75,7 +75,7 @@ pipelines:
           - echo "On-host Sonarqube check"
           - export PATH="$PATH:/root/.dotnet/tools"
           - apt-get update && apt-get install -y openjdk-8-jre
-          - dotnet tool install --global dotnet-sonarscanner
+          - dotnet tool install --global dotnet-sonarscanner --version 4.4.2
           - chmod +x /root/.dotnet/tools/.store/dotnet-sonarscanner/4.4.2/dotnet-sonarscanner/4.4.2/tools/netcoreapp2.1/any/sonar-scanner-3.2.0.1227/bin/sonar-scanner
           - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
           - dotnet build
