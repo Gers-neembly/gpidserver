@@ -51,7 +51,7 @@ namespace Neembly.GPIDServer.Persistence.Helpers
         public AppUser GetAppUser(string email, string username, string operatorId)
         {
             var playerInfo =  _appDBContext.Users.Where(r => r.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)
-                                                            && r.Email.Equals(username, StringComparison.InvariantCultureIgnoreCase)
+                                                            && r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)
                                                             && r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
             return playerInfo;
         }

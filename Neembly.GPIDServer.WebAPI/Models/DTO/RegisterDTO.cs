@@ -29,6 +29,8 @@ namespace Neembly.GPIDServer.WebAPI.Model.DTO
         [Required]
         public string OperatorId { get; set; }
 
+        public string RoleType { get; set; }
+
         public PlayerInfo playerInfo { get; set; }
     }
 }
