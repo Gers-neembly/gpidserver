@@ -190,7 +190,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
             if (environmentName == "local" 
-                 || environmentName == "development"
+                 || environmentName == "debug"
                    || environmentName == "staging" ) 
             {
                 await _emailDispatcher.SendActivationLink(content, name, email);
