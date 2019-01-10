@@ -189,9 +189,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private async Task SendActivationEmail(string content, string name, string email)
         {
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
-            if (environmentName == "local" 
-                 || environmentName == "debug"
-                   || environmentName == "staging" ) 
+            if (environmentName != "release" 
+                 || environmentName != "production")
             {
                 await _emailDispatcher.SendActivationLink(content, name, email);
             }
