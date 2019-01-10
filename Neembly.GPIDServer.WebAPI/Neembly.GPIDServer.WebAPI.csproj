@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Neembly.GPIDServer.Persistence\Neembly.GPIDServer.Persistence.csproj" />
+    <ProjectReference Include="..\Neembly.GPIDServer.SharedServices\Neembly.GPIDServer.SharedServices.csproj" />
   </ItemGroup>
 
 </Project>

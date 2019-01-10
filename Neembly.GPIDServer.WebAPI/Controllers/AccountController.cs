@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
+using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Model.DTO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
@@ -20,13 +22,15 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IDataAccess _dataAccess;
+        private readonly IEmailDispatcher _emailDispatcher;
 
         public AccountController(
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            IDataAccess dataAccess
+            IDataAccess dataAccess,
+            IEmailDispatcher emailDispatcher
             )
         {
             _userManager = userManager;
@@ -34,6 +38,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _roleManager = roleManager;
             _configuration = configuration;
             _dataAccess = dataAccess;
+            _emailDispatcher = emailDispatcher;
         }
 
         [Route("register")]
@@ -102,6 +107,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                         resultInfo.DataInfo = callbackUrl;
                         resultInfo.Message = $"Registration completed, please verify your email - {registerInfo.Email}";
                         resultInfo.Success = true;
+                        await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email);
                     }
                     else
                     {
@@ -153,6 +159,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                         resultInfo.DataInfo = callbackUrl;
                         resultInfo.Message = $"Registration verified, Thank you.";
                         resultInfo.Success = true;
+                        return new JsonResult(resultInfo.Message);
                     }
                 }
                 else
@@ -165,7 +172,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             {
                 resultInfo.ErrorDescription = $"{ex.Message}={ex.InnerException.Message}";
             }
-            return new JsonResult(resultInfo);
+            return new JsonResult(resultInfo.ErrorDescription);
         }
 
         private async Task CreateUserRoles(AppUser user, string roleDesired)
@@ -177,6 +184,17 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 roleResult = await _roleManager.CreateAsync(new IdentityRole(roleDesired));
             }
             await _userManager.AddToRoleAsync(user, roleDesired);
+        }
+
+        private async Task SendActivationEmail(string content, string name, string email)
+        {
+            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
+            if (environmentName == "local" 
+                 || environmentName == "development"
+                   || environmentName == "staging" ) 
+            {
+                await _emailDispatcher.SendActivationLink(content, name, email);
+            }
         }
 
     }

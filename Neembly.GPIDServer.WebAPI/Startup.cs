@@ -11,6 +11,8 @@ using Neembly.GPIDServer.Persistence;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Helpers;
 using Neembly.GPIDServer.Persistence.Interfaces;
+using Neembly.GPIDServer.SharedServices.Helpers;
+using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Services;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -59,6 +61,7 @@ namespace Neembly.GPIDServer.WebAPI
 
             // dependency injections
             services.AddScoped<IDataAccess, DataAccess>();
+            services.AddScoped<IEmailDispatcher, EmailDispatcher>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
 
             services.AddCors();
