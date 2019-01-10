@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
+using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Model.DTO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
@@ -17,20 +19,26 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     {
         private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IDataAccess _dataAccess;
+        private readonly IEmailDispatcher _emailDispatcher;
 
         public AccountController(
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager,
+            RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            IDataAccess dataAccess
+            IDataAccess dataAccess,
+            IEmailDispatcher emailDispatcher
             )
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _configuration = configuration;
             _dataAccess = dataAccess;
+            _emailDispatcher = emailDispatcher;
         }
 
         [Route("register")]
@@ -42,15 +50,18 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
             try
             {
-                if (string.IsNullOrWhiteSpace(registerInfo.OperatorId))
+                string clientOperatorId = registerInfo.OperatorId;
+                if (string.IsNullOrWhiteSpace(clientOperatorId))
                 {
                     resultInfo.ErrorDescription = "operatorid is null";
                     return new JsonResult(resultInfo);
                 }
 
-                if (string.IsNullOrWhiteSpace(registerInfo.Email) || string.IsNullOrWhiteSpace(registerInfo.Password))
+                if (string.IsNullOrWhiteSpace(registerInfo.Email) 
+                    || string.IsNullOrWhiteSpace(registerInfo.Password)
+                      || string.IsNullOrWhiteSpace(registerInfo.UserName))
                 {
-                    resultInfo.ErrorDescription = "email or password is null";
+                    resultInfo.ErrorDescription = "email or password or username is null";
                     return new JsonResult(resultInfo);
                 }
 
@@ -60,36 +71,43 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                     return new JsonResult(resultInfo);
                 }
 
-                AppUser player = _dataAccess.GetAppUser(registerInfo.Email, registerInfo.UserName, registerInfo.OperatorId);
+                string clientUsername = registerInfo.UserName + '_' + clientOperatorId;
+
+                AppUser player = _dataAccess.GetAppUser(registerInfo.Email, clientUsername, clientOperatorId);
                 if (player == null)
                 {
                     var user = new AppUser
                     {
-                        UserName = registerInfo.UserName,
+                        UserName = clientUsername,
+                        OperatorId = clientOperatorId,
                         Email = registerInfo.Email,
-                        OperatorId = registerInfo.OperatorId
+                        DisplayUsername = registerInfo.UserName
                     };
 
                     var result = await _userManager.CreateAsync(user, registerInfo.Password);
                     if (result.Succeeded)
                     {
-
-                        user.PlayerId = await _dataAccess.CreatePlayerById(user.Id, user.OperatorId, registerInfo.playerInfo);
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("userName", user.UserName));
+                        string theRole = string.IsNullOrEmpty(registerInfo.RoleType) ? "player" : registerInfo.RoleType.ToLower();
+                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", user.OperatorId));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", user.PlayerId));
+                        if (theRole == "player")
+                        {
+                            user.PlayerId = await _dataAccess.CreatePlayerById(user.Id, user.OperatorId, registerInfo.playerInfo);
+                            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", user.OperatorId));
+                            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", user.PlayerId));
+                        }
 
+                        await CreateUserRoles(user, theRole);
 
                         var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                         var callbackUrl = Url.Action(
-                            "VerifyEmail", "Account",
+                            "verifyemail", "account",
                             values: new { userId = user.Id, code = emailConfirmationToken, operatorId = user.OperatorId },
                             protocol: Request.Scheme);
-                        await _signInManager.SignInAsync(user, false);
                         resultInfo.DataInfo = callbackUrl;
                         resultInfo.Message = $"Registration completed, please verify your email - {registerInfo.Email}";
                         resultInfo.Success = true;
+                        await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email);
                     }
                     else
                     {
@@ -114,6 +132,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
         }
 
+        [Route("verifyemail")]
+        [HttpGet]
         public async Task<IActionResult> VerifyEmail(string userId, string code, string operatorId)
         {
 
@@ -139,6 +159,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                         resultInfo.DataInfo = callbackUrl;
                         resultInfo.Message = $"Registration verified, Thank you.";
                         resultInfo.Success = true;
+                        return new JsonResult(resultInfo.Message);
                     }
                 }
                 else
@@ -151,7 +172,29 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             {
                 resultInfo.ErrorDescription = $"{ex.Message}={ex.InnerException.Message}";
             }
-            return new JsonResult(resultInfo);
+            return new JsonResult(resultInfo.ErrorDescription);
+        }
+
+        private async Task CreateUserRoles(AppUser user, string roleDesired)
+        {
+            IdentityResult roleResult;
+            var roleCheck = await _roleManager.RoleExistsAsync(roleDesired);
+            if (!roleCheck)
+            {
+                roleResult = await _roleManager.CreateAsync(new IdentityRole(roleDesired));
+            }
+            await _userManager.AddToRoleAsync(user, roleDesired);
+        }
+
+        private async Task SendActivationEmail(string content, string name, string email)
+        {
+            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
+            if (environmentName == "local" 
+                 || environmentName == "development"
+                   || environmentName == "staging" ) 
+            {
+                await _emailDispatcher.SendActivationLink(content, name, email);
+            }
         }
 
     }

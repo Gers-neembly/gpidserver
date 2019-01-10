@@ -2,9 +2,7 @@
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Neembly.GPIDServer.Persistence.Helpers
@@ -50,9 +48,13 @@ namespace Neembly.GPIDServer.Persistence.Helpers
 
         public AppUser GetAppUser(string email, string username, string operatorId)
         {
-            var playerInfo =  _appDBContext.Users.Where(r => r.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)
-                                                            && r.Email.Equals(username, StringComparison.InvariantCultureIgnoreCase)
+            var playerInfo =  _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
                                                             && r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            if (playerInfo != null)
+              return playerInfo;
+
+            playerInfo = _appDBContext.Users.Where(r => r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)
+                                                        && r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
             return playerInfo;
         }
 
