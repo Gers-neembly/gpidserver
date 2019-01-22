@@ -36,6 +36,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
             claims = claims.Where(claim => context.RequestedClaimTypes.Contains(claim.Type)).ToList();
             claims.Add(new Claim("operatorId", user.OperatorId));
             claims.Add(new Claim("playerId", user.PlayerId));
+            claims.Add(new Claim("registrationStatus", user.RegistrationStatus));
 
             if (_hostingEnvironment.IsDevelopment() || _hostingEnvironment.EnvironmentName.ToLower() == "local")
             {

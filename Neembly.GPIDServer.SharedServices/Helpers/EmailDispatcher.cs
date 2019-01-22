@@ -38,6 +38,20 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             await SendMessage(emailInfo);
         }
 
+        public async Task SendWelcomeEmail(string referer, string name, string toEmail)
+        {
+            string emailBody = $"<html><body><h2>Welcome to {referer}</h2><h1>Hi {name},</h1><p>Please check your activation link that we sent you to start playing</p></body></html>";
+            EmailInfo emailInfo = new EmailInfo
+            {
+                From = "info@neembly.com",
+                To = toEmail,
+                Subject = $"Welcome {name}! from {referer}",
+                Body = emailBody
+            };
+            await SendMessage(emailInfo);
+        }
+
+        #region PrivateMethod
         private async Task SendMessage(EmailInfo emailInfo)
         {
             MailMessage mailMessage = new MailMessage();
@@ -48,5 +62,6 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             mailMessage.IsBodyHtml = true;
             await _smtpClient.SendMailAsync(mailMessage);
         }
+        #endregion 
     }
 }

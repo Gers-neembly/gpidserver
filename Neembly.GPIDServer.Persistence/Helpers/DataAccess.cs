@@ -58,6 +58,21 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             return playerInfo;
         }
 
+        public async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus)
+        {
+            var playerInfo = await _appDBContext.Users.FindAsync(userId);
+            if (playerInfo == null)
+                return false;
+            string strStatus = Enum.GetName(typeof(RegistrationStatusNames), registerStatus);
+            if (playerInfo.RegistrationStatus.Equals(strStatus, StringComparison.InvariantCultureIgnoreCase))
+                return true;
+            else
+            {
+                playerInfo.RegistrationStatus = strStatus;
+                return (await _appDBContext.SaveChangesAsync() > 0);
+            }
+        }
+
 
     }
 }

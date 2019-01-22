@@ -1,31 +1,35 @@
 ﻿using Neembly.GPIDServer.SharedClasses;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
 namespace Neembly.GPIDServer.WebAPI.Model.DTO
 {
     public class RegisterDTO
     {
-        [Required]
+        [JsonRequired]
         [Display(Name = "Username")]
         public string UserName { get; set; }
 
-        [Required]
+        [JsonRequired]
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; }
 
-        [Required]
+        [JsonRequired]
         [DataType(DataType.Password)]
         [Display(Name = "Password")]
         public string Password { get; set; }
 
-        [Required]
+        [JsonRequired]
         [DataType(DataType.Password)]
         [Display(Name = "Confirm password")]
         public string ConfirmPassword { get; set; }
 
-        [Required]
+        [JsonRequired]
         public string OperatorId { get; set; }
+
+        [JsonRequired]
+        public string HostedUrl { get; set; }
 
         public string RoleType { get; set; }
 

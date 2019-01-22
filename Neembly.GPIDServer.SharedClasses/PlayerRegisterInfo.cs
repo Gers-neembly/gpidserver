@@ -1,0 +1,10 @@
+﻿namespace Neembly.GPIDServer.SharedClasses
+{
+    public class PlayerRegisterInfo
+    {
+        public int OperatorAccountId { get; set; }
+        public string PlayerAccountId { get; set; }
+        public string Username { get; set; }
+        public string Email { get; set; }
+    }
+}

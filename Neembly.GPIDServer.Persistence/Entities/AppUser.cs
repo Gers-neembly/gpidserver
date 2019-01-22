@@ -8,5 +8,6 @@ namespace Neembly.GPIDServer.Persistence.Entities
         public string DisplayUsername { get; set; }
         public string OperatorId { get; set; }
         public string PlayerId { get; set; }
+        public string RegistrationStatus { get; set; }
     }
 }
