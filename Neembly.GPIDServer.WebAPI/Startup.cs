@@ -62,29 +62,10 @@ namespace Neembly.GPIDServer.WebAPI
             // dependency injections
             services.AddScoped<IDataAccess, DataAccess>();
             services.AddScoped<IEmailDispatcher, EmailDispatcher>();
+            services.AddScoped<IExtensionProviders, ExtensionProviders>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
 
             services.AddCors();
-
-            var test = Configuration.GetValue<string>("HostingIDS", "");
-
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                // base-address of your identityserver
-                options.Authority = Configuration.GetValue<string>("HostingIDS", "");
-
-                // name of the API resource
-                options.Audience = "api1";
-
-                options.RequireHttpsMetadata = false;
-            });
-
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
@@ -108,7 +89,6 @@ namespace Neembly.GPIDServer.WebAPI
                 .AllowCredentials());
 
             app.UseIdentityServer();
-            app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseMvc();
         }

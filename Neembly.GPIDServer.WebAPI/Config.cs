@@ -1,5 +1,6 @@
 ﻿using IdentityServer4;
 using IdentityServer4.Models;
+using Neembly.GPIDServer.Constants;
 using System.Collections.Generic;
 
 namespace Neembly.GPIDServer.WebAPI
@@ -34,21 +35,34 @@ namespace Neembly.GPIDServer.WebAPI
                 // resource owner password grant client
                 new Client
                 {
-                    ClientId = "ro.gpidserver",
+                    ClientId = GlobalConstants.IdServerClient,
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
 
                     ClientSecrets =
                     {
-                        new Secret("secret".Sha256())
+                        new Secret(GlobalConstants.IdServerSecret.Sha256())
                     },
                     AllowedScopes = {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
                         IdentityServerConstants.StandardScopes.Address,
-                        "api1"
+                        GlobalConstants.IdServerApiScope
                     }
+                },
+
+                new Client
+                {
+                    ClientId = GlobalConstants.IdServerClientToken,
+                    AllowedGrantTypes = GrantTypes.ClientCredentials,
+                    ClientSecrets =
+                    {
+                        new Secret(GlobalConstants.IdServerSecret.Sha256())
+                    },
+                    AllowedScopes = { GlobalConstants.IdServerApiScope }
                 }
+
+
             };
         }
                
