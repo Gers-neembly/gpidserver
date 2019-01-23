@@ -10,7 +10,7 @@ using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
-using Neembly.GPIDServer.WebAPI.Model.DTO;
+using Neembly.GPIDServer.WebAPI.Models.DTO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -43,6 +43,36 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _dataAccess = dataAccess;
             _emailDispatcher = emailDispatcher;
             _extensionProviders = extensionProviders;
+        }
+
+        [HttpPut]
+        public async Task<object> Profile([FromBody] ProfileUpdateDTO profileUpdateInfo)
+        {
+            var resultInfo = new ResultsInfo { Success = false, DataInfo = null };
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(profileUpdateInfo.PlayerId))
+                {
+                    resultInfo.ErrorDescription = "player is empty or null";
+                    return new JsonResult(resultInfo);
+                }
+                var dataInfo = await _dataAccess.ProfileRequestChange(profileUpdateInfo.PlayerId, new PlayerInfo
+                {
+                    FirstName = profileUpdateInfo.playerInfo.FirstName,
+                    LastName = profileUpdateInfo.playerInfo.LastName,
+                    MobileNo = profileUpdateInfo.playerInfo.MobileNo,
+                    MobilePrefix = profileUpdateInfo.playerInfo.MobilePrefix
+                });
+                resultInfo.DataInfo = dataInfo;
+                resultInfo.Success = dataInfo;
+            }
+            catch (Exception ex)
+            {
+                resultInfo.ErrorDescription = $"{ex.Message}={ex.InnerException.Message}";
+            }
+            return new JsonResult(resultInfo);
+
         }
 
         [Route("register")]
@@ -237,7 +267,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             };
             PlayerStatusInfo playerStatus = new PlayerStatusInfo
             {
-                playerId = playerId,
+                PlayerId = playerId,
                 Status = newStatus
             };
             return await _extensionProviders.PlayerSetStatus(authToken, playerStatus);

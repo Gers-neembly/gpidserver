@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Neembly.GPIDServer.WebAPI.Model.DTO
+namespace Neembly.GPIDServer.WebAPI.Models.DTO
 {
     public class ResultsInfo
     {

@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
-namespace Neembly.GPIDServer.WebAPI.Model.DTO
+namespace Neembly.GPIDServer.WebAPI.Models.DTO
 {
     public class RegisterDTO
     {
