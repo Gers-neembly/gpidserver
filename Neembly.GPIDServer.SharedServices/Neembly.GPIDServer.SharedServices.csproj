@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IdentityServer4" Version="2.3.2" />
+    <PackageReference Include="IdentityServer4.AspNetIdentity" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Neembly.GPIDServer.Constants\Neembly.GPIDServer.Constants.csproj" />
+    <ProjectReference Include="..\Neembly.GPIDServer.SharedClasses\Neembly.GPIDServer.SharedClasses.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -8,5 +8,7 @@ namespace Neembly.GPIDServer.Persistence.Interfaces
     {
         AppUser GetAppUser(string email, string username, string operatorId);
         Task<string> CreatePlayerById(string userId, string operatorId, PlayerInfo playerInfo = null);
+        Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus);
+        Task<bool> ProfileRequestChange(string playerId, PlayerInfo playerInfo);
     }
 }
