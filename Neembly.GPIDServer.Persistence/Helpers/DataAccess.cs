@@ -38,7 +38,9 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             _appDBContext.Players.Add(new Player
             { PlayerId = tagFormatted,
               FirstName = playerInfo == null ? string.Empty : playerInfo.FirstName,
-              LastName = playerInfo == null ? string.Empty : playerInfo.LastName
+              LastName = playerInfo == null ? string.Empty : playerInfo.LastName,
+              MobilePrefix = playerInfo == null ? string.Empty : playerInfo.MobilePrefix,
+              MobileNo = playerInfo == null ? string.Empty : playerInfo.MobileNo,
             });
             player.PlayerId = tagFormatted;
 
@@ -71,6 +73,18 @@ namespace Neembly.GPIDServer.Persistence.Helpers
                 playerInfo.RegistrationStatus = strStatus;
                 return (await _appDBContext.SaveChangesAsync() > 0);
             }
+        }
+
+        public async Task<bool> ProfileRequestChange(string playerId, PlayerInfo playerInfo)
+        {
+            var playerRecord = _appDBContext.Players.Where(r => r.PlayerId.Equals(playerId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            if (playerRecord == null)
+                return false;
+            playerRecord.FirstName = playerInfo.FirstName;
+            playerRecord.LastName = playerInfo.LastName;
+            playerRecord.MobilePrefix = playerInfo.MobilePrefix;
+            playerRecord.MobileNo = playerInfo.MobileNo;
+            return (await _appDBContext.SaveChangesAsync() > 0);
         }
 
 

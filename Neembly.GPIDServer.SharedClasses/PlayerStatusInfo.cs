@@ -6,7 +6,7 @@ namespace Neembly.GPIDServer.SharedClasses
 {
     public class PlayerStatusInfo
     {
-        public string playerId { get; set; }
+        public string PlayerId { get; set; }
         public string Status { get; set; }
     }
 }
