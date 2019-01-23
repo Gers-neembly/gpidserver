@@ -45,8 +45,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _extensionProviders = extensionProviders;
         }
 
+        [Route("profile")]
         [HttpPut]
-        public async Task<object> Profile([FromBody] ProfileUpdateDTO profileUpdateInfo)
+        public async Task<IActionResult> Profile([FromBody] ProfileUpdateDTO profileUpdateInfo)
         {
             var resultInfo = new ResultsInfo { Success = false, DataInfo = null };
 
@@ -78,7 +79,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [Route("register")]
         [HttpPost]
         // Description: Registers the new player, will generate a email token based link
-        public async Task<object> Register([FromBody] RegisterDTO registerInfo)
+        public async Task<IActionResult> Register([FromBody] RegisterDTO registerInfo)
         {
             var resultInfo = new ResultsInfo { Success = false, DataInfo = null };
 
