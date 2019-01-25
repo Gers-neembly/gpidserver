@@ -152,7 +152,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                                                   Email = user.Email,
                                                   Username = user.DisplayUsername,
                                                   PlayerAccountId = user.PlayerId,
-                                                  OperatorAccountId = Convert.ToInt32(registerInfo.OperatorId)
+                                                  OperatorAccountId = Convert.ToInt32(registerInfo.OperatorId),
+                                                  CreatedBy = user.DisplayUsername
                                               },
                                               registerInfo.HostedUrl
                                             );
@@ -215,7 +216,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                         if (!string.IsNullOrEmpty(user.PlayerId))
                         {
                             await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
-                            await SetPlayerStatusOnProductDB(user.PlayerId, "Active", urlhosted);
+                            await SetPlayerStatusOnProductDB(user.DisplayUsername, user.PlayerId, "Active", urlhosted);
                         }
                         return Redirect(urlreferer);
                     }
@@ -261,7 +262,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
            return await _dataAccess.SetRegistrationStatus(userId, registrationStatus);
         }
 
-        private async Task<bool> SetPlayerStatusOnProductDB(string playerId, string newStatus, string hostedUrl)
+        private async Task<bool> SetPlayerStatusOnProductDB(string username, string playerId, string newStatus, string hostedUrl)
         {
             AuthTokenInfo authToken = new AuthTokenInfo
             {
@@ -272,7 +273,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             PlayerStatusInfo playerStatus = new PlayerStatusInfo
             {
                 PlayerId = playerId,
-                Status = newStatus
+                Status = newStatus,
+                ModifiedBy = username
             };
             return await _extensionProviders.PlayerSetStatus(authToken, playerStatus);
         }
