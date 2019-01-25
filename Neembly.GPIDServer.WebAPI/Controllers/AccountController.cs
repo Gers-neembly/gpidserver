@@ -23,8 +23,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IDataAccess _dataAccess;
-        private readonly IEmailDispatcher _emailDispatcher;
         private readonly IExtensionProviders _extensionProviders;
+        private readonly IEmailDispatcher _emailDispatcher;
+        private readonly IEmailQueueService _emailQueueService;
 
         public AccountController(
             UserManager<AppUser> userManager,
@@ -32,8 +33,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
             IDataAccess dataAccess,
+            IExtensionProviders extensionProviders,
             IEmailDispatcher emailDispatcher,
-            IExtensionProviders extensionProviders
+            IEmailQueueService emailQueueService
             )
         {
             _userManager = userManager;
@@ -41,8 +43,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _roleManager = roleManager;
             _configuration = configuration;
             _dataAccess = dataAccess;
-            _emailDispatcher = emailDispatcher;
             _extensionProviders = extensionProviders;
+            _emailDispatcher = emailDispatcher;
+            _emailQueueService = emailQueueService;
         }
 
         [Route("profile")]
@@ -157,8 +160,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                         if (registerationCompleted)
                         {
                             resultInfo.Message = $"{GlobalConstants.MsgRegisterSuccess} - {registerInfo.Email}";
-                            await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email);
-                            await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email);
+                            await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, user.OperatorId);
+                            await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, user.OperatorId);
                         }
                         else
                             resultInfo.Message = $"{GlobalConstants.MsgRegisterFailed}";
@@ -274,23 +277,29 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return await _extensionProviders.PlayerSetStatus(authToken, playerStatus);
         }
 
-        private async Task SendWelcomeEmail(string referer, string name, string email)
+        private async Task SendWelcomeEmail(string referer, string name, string email, string operatorId)
         {
+            var emailMessage = _emailDispatcher.CreateWelcomeEmail(referer, name, email, operatorId);
+            await _emailQueueService.Send(emailMessage);
+
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
             if (environmentName != "release" 
                  || environmentName != "production")
             {
-                await _emailDispatcher.SendWelcomeEmail(referer, name, email);
+                await _emailDispatcher.EmailSender(emailMessage);
             }
         }
 
-        private async Task SendActivationEmail(string content, string name, string email)
+        private async Task SendActivationEmail(string content, string name, string email, string operatorId)
         {
+            var emailMessage = _emailDispatcher.CreateEmailActivationLink(content, name, email, operatorId);
+            await _emailQueueService.Send(emailMessage);
+
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
             if (environmentName != "release"
                  || environmentName != "production")
             {
-                await _emailDispatcher.SendActivationLink(content, name, email);
+                await _emailDispatcher.EmailSender(emailMessage);
             }
         }
 
