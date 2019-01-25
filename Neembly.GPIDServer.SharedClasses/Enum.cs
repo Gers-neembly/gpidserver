@@ -22,4 +22,14 @@ namespace Neembly.GPIDServer.SharedClasses
         Get = 3,
     }
 
+    public enum EmailSendingStatus
+    {
+        [Description("Pending")]
+        Pending = 1,
+        [Description("Sent")]
+        Registered = 2,
+        [Description("Failed")]
+        Abandon = 3,
+    }
+
 }

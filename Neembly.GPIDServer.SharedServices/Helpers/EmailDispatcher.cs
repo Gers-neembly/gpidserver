@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -37,6 +38,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
                 OperatorId = operatorId,
                 IsHtml = true
             };
+            emailMessage.Status = Enum.GetName(typeof(EmailSendingStatus), EmailSendingStatus.Pending);
             return emailMessage;
         }
 
@@ -50,8 +52,9 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
                 Subject = $"Welcome {name}! from {referer}",
                 Message = emailBody,
                 OperatorId = operatorId,
-                IsHtml = true
+                IsHtml = true,
             };
+            emailMessage.Status = Enum.GetName(typeof(EmailSendingStatus), EmailSendingStatus.Pending);
             return emailMessage;
         }
 

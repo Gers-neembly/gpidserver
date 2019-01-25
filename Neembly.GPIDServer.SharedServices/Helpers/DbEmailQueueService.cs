@@ -32,6 +32,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
                 Sender = emailMessage.Sender,
                 Subject = emailMessage.Subject,
                 BlindCarbonCopies = emailMessage.BlindCarbonCopies,
+                Status = emailMessage.Status
             };
             var resultSave = _utilscontext.EmailQueues.Add(emailToAdd);
             if (resultSave == null)

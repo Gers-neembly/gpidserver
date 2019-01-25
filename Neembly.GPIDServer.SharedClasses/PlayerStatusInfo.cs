@@ -8,5 +8,6 @@ namespace Neembly.GPIDServer.SharedClasses
     {
         public string PlayerId { get; set; }
         public string Status { get; set; }
+        public string ModifiedBy { get; set; }
     }
 }
