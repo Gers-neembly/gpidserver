@@ -1,4 +1,5 @@
-﻿using IdentityServer4.Services;
+﻿using FluentValidation.AspNetCore;
+using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,6 +14,7 @@ using Neembly.GPIDServer.Persistence.Helpers;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedServices.Helpers;
 using Neembly.GPIDServer.SharedServices.Interfaces;
+using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Services;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -69,7 +71,10 @@ namespace Neembly.GPIDServer.WebAPI
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
 
             services.AddCors();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services
+                .AddMvc(options => options.Filters.Add(typeof(CustomExceptionFilterAttribute)))
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddFluentValidation(fv => fv.RegisterValidatorsFromAssembly(typeof(Exceptions.ValidationException).Assembly));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
