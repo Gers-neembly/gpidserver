@@ -152,7 +152,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                                                   Email = user.Email,
                                                   Username = user.DisplayUsername,
                                                   PlayerAccountId = user.PlayerId,
-                                                  OperatorAccountId = Convert.ToInt32(registerInfo.OperatorId),
+                                                  OperatorId = Convert.ToInt32(registerInfo.OperatorId),
                                                   CreatedBy = user.DisplayUsername
                                               },
                                               registerInfo.HostedUrl
