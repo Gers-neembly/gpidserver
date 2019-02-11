@@ -1,6 +1,6 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=206.189.85.147;Port=9099;Username=identity_api;Password=BourneIdentity;Database=gpidentityserver;",
-    "UtilsConnection": "Host=206.189.85.147;Port=9099;Username=postgres;Password=n1mbl3;Database=systemlogs;"
+    "DefaultConnection": "Host=159.89.202.60;Port=9099;Username=identity_api;Password=BourneIdentity;Database=gpidentityserver;",
+    "UtilsConnection": "Host=159.89.202.60;Port=9099;Username=postgres;Password=n1mbl3;Database=systemlogs;"
   }
 }
