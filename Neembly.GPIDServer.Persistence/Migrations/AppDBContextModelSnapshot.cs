@@ -153,7 +153,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256);
 
-                    b.Property<string>("OperatorId");
+                    b.Property<int>("OperatorId");
 
                     b.Property<string>("PasswordHash");
 
@@ -189,7 +189,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("OperatorId");
+                    b.Property<int>("OperatorId");
 
                     b.Property<long>("TagId");
 

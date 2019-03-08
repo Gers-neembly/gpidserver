@@ -2,7 +2,7 @@
 {
     public class EmailMessage
     {
-        public string OperatorId { get; set; }
+        public int OperatorId { get; set; }
         public string Subject { get; set; }
         public bool IsHtml { get; set; }
         public string Message { get; set; }

@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Neembly.GPIDServer.Persistence.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20190118033620_registerStatus")]
-    partial class registerStatus
+    [Migration("20190308072041_initial")]
+    partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -155,7 +155,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256);
 
-                    b.Property<string>("OperatorId");
+                    b.Property<int>("OperatorId");
 
                     b.Property<string>("PasswordHash");
 
@@ -191,7 +191,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("OperatorId");
+                    b.Property<int>("OperatorId");
 
                     b.Property<long>("TagId");
 
@@ -208,6 +208,10 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<string>("FirstName");
 
                     b.Property<string>("LastName");
+
+                    b.Property<string>("MobileNo");
+
+                    b.Property<string>("MobilePrefix");
 
                     b.HasKey("PlayerId");
 

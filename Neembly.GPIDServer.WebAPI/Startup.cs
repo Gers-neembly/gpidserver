@@ -1,6 +1,5 @@
 ﻿using FluentValidation.AspNetCore;
 using IdentityServer4.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -15,8 +14,8 @@ using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedServices.Helpers;
 using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Filters;
+using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Services;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace Neembly.GPIDServer.WebAPI
 {
@@ -51,12 +50,16 @@ namespace Neembly.GPIDServer.WebAPI
                     .AddEntityFrameworkStores<AppDBContext>()
                     .AddDefaultTokenProviders();
 
+            var authClientConfig = new AuthClientConfiguration();
+            Configuration.Bind("AuthClientConfiguration", authClientConfig);
+            services.AddSingleton(authClientConfig);
+
             services.AddIdentityServer()
                     .AddDeveloperSigningCredential()
                     .AddInMemoryPersistedGrants()
                     .AddInMemoryIdentityResources(Config.GetIdentityResources())
-                    .AddInMemoryApiResources(Config.GetApiResources())
-                    .AddInMemoryClients(Config.GetClients())
+                    .AddInMemoryApiResources(Config.GetApiResources(authClientConfig.AuthClientResourcesList))
+                    .AddInMemoryClients(Config.GetClients(authClientConfig.AuthClientInfoList))
                     .AddAspNetIdentity<AppUser>();
 
             services.Configure<IdentityOptions>(o => {

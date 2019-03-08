@@ -26,7 +26,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             _smtpClient.EnableSsl = true;
         }
 
-        public EmailMessage CreateEmailActivationLink(string emailLink, string name, string toEmail, string operatorId)
+        public EmailMessage CreateEmailActivationLink(string emailLink, string name, string toEmail, int operatorId)
         {
             string emailBody = $"<html><body><h2>Hi {name},</h2><h1>Thank you for your registration</h1><a href = {emailLink}>Please Click to confirm your gaming account</a></body></html>";
             EmailMessage emailMessage = new EmailMessage
@@ -42,7 +42,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             return emailMessage;
         }
 
-        public EmailMessage CreateWelcomeEmail(string referer, string name, string toEmail, string operatorId)
+        public EmailMessage CreateWelcomeEmail(string referer, string name, string toEmail, int operatorId)
         {
             string emailBody = $"<html><body><h2>Welcome to {referer}</h2><h1>Hi {name},</h1><p>Please check your activation link that we sent you to start playing</p></body></html>";
             EmailMessage emailMessage = new EmailMessage

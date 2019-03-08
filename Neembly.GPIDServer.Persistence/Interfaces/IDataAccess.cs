@@ -6,8 +6,10 @@ namespace Neembly.GPIDServer.Persistence.Interfaces
 {
     public interface IDataAccess
     {
-        AppUser GetAppUser(string email, string username, string operatorId);
-        Task<string> CreatePlayerById(string userId, string operatorId, PlayerInfo playerInfo = null);
+        AppUser GetAppUser(string email, string username, int operatorId);
+        bool CheckEmailAccount(string email, int operatorId);
+        bool CheckUsernameAccount(string username, int operatorId);
+        Task<string> CreatePlayerById(string userId, int operatorId, PlayerInfo playerInfo = null);
         Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus);
         Task<bool> ProfileRequestChange(string playerId, PlayerInfo playerInfo);
     }

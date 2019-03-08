@@ -1,6 +1,4 @@
 ﻿using IdentityServer4;
-using Microsoft.AspNetCore.Mvc;
-using Neembly.GPIDServer.Constants;
 using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
 using System;
@@ -20,13 +18,13 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
 
         public async Task<bool> PlayerRegister(AuthTokenInfo authTokenInfo, PlayerRegisterInfo playerRegister)
         {
-            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { GlobalConstants.IdServerApiScope }, new[] { GlobalConstants.IdServerApiAudience });
+            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime);
             return await SendHttpWrite("api/players/register", authTokenInfo.ApiUrl, playerRegister, playerToken, HttpTransactType.Post);
         }
 
         public async Task<bool> PlayerSetStatus(AuthTokenInfo authTokenInfo, PlayerStatusInfo playerStatus)
         {
-            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { GlobalConstants.IdServerApiScope }, new[] { GlobalConstants.IdServerApiAudience });
+            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime);
             return await SendHttpWrite("api/players/status", authTokenInfo.ApiUrl, playerStatus, playerToken, HttpTransactType.Put);
         }
 

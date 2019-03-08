@@ -41,8 +41,10 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     LockoutEnd = table.Column<DateTimeOffset>(nullable: true),
                     LockoutEnabled = table.Column<bool>(nullable: false),
                     AccessFailedCount = table.Column<int>(nullable: false),
-                    OperatorId = table.Column<string>(nullable: true),
-                    PlayerId = table.Column<string>(nullable: true)
+                    DisplayUsername = table.Column<string>(nullable: true),
+                    OperatorId = table.Column<int>(nullable: false),
+                    PlayerId = table.Column<string>(nullable: true),
+                    RegistrationStatus = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -55,7 +57,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    OperatorId = table.Column<string>(nullable: true),
+                    OperatorId = table.Column<int>(nullable: false),
                     TagId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
@@ -69,7 +71,9 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                 {
                     PlayerId = table.Column<string>(nullable: false),
                     FirstName = table.Column<string>(nullable: true),
-                    LastName = table.Column<string>(nullable: true)
+                    LastName = table.Column<string>(nullable: true),
+                    MobilePrefix = table.Column<string>(nullable: true),
+                    MobileNo = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {

@@ -34,7 +34,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
             var roles = await _userManager.GetRolesAsync(user);
             var claims = principal.Claims.ToList();
             claims = claims.Where(claim => context.RequestedClaimTypes.Contains(claim.Type)).ToList();
-            claims.Add(new Claim("operatorId", user.OperatorId));
+            claims.Add(new Claim("operatorId", user.OperatorId.ToString()));
             claims.Add(new Claim("playerId", user.PlayerId));
             claims.Add(new Claim("registrationStatus", user.RegistrationStatus));
 

@@ -16,17 +16,16 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             _appDBContext = appDBContext;
         }
 
-        public async Task<string> CreatePlayerById(string userId, string operatorId, PlayerInfo playerInfo = null)
+        public async Task<string> CreatePlayerById(string userId, int operatorId, PlayerInfo playerInfo = null)
         {
             var player = _appDBContext.Users.Where(r => r.Id.Equals(userId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
             if (player == null)
                 return string.Empty;
             long tagId = 1;
-            var operatorRecord = _appDBContext.OperatorData.Where(r => r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+
+            var operatorRecord = _appDBContext.OperatorData.Where(r => r.OperatorId == operatorId).FirstOrDefault();
             if (operatorRecord == null)
-            {
                 _appDBContext.OperatorData.Add(new OperatorData { OperatorId = operatorId, TagId = 1 });
-            }
             else
             {
                 tagId = operatorRecord.TagId + 1;
@@ -42,22 +41,37 @@ namespace Neembly.GPIDServer.Persistence.Helpers
               MobilePrefix = playerInfo == null ? string.Empty : playerInfo.MobilePrefix,
               MobileNo = playerInfo == null ? string.Empty : playerInfo.MobileNo,
             });
+
             player.PlayerId = tagFormatted;
 
             await _appDBContext.SaveChangesAsync();
             return tagFormatted;
         }
 
-        public AppUser GetAppUser(string email, string username, string operatorId)
+        public AppUser GetAppUser(string email, string username, int operatorId)
         {
             var playerInfo =  _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
-                                                            && r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+                                                            && r.OperatorId == operatorId).FirstOrDefault();
             if (playerInfo != null)
               return playerInfo;
 
             playerInfo = _appDBContext.Users.Where(r => r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)
-                                                        && r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+                                                        && r.OperatorId == operatorId).FirstOrDefault();
             return playerInfo;
+        }
+
+        public bool CheckEmailAccount(string email, int operatorId)
+        {
+            var playerInfo = _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
+                                                           && r.OperatorId == operatorId).FirstOrDefault();
+            return (playerInfo != null);
+        }
+
+        public bool CheckUsernameAccount(string username, int operatorId)
+        {
+            var playerInfo = _appDBContext.Users.Where(r => r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)
+                                                        && r.OperatorId == operatorId).FirstOrDefault();
+            return (playerInfo != null);
         }
 
         public async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus)
