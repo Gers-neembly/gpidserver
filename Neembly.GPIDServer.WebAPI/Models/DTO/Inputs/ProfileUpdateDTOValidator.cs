@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Neembly.GPIDServer.Constants;
 
 namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
 {
@@ -7,7 +8,8 @@ namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
         #region Constructor
         public ProfileUpdateDTOValidator()
         {
-            RuleFor(x => x.PlayerId).NotNull().NotEmpty().Length(0, 25);
+            RuleFor(x => x.PlayerId).NotNull().NotEmpty().WithMessage(GlobalConstants.ErrUserAccountNotExisting)
+                                              .Length(0, 25);
             RuleFor(x => x.PlayerInfo).NotNull();
         }
         #endregion
