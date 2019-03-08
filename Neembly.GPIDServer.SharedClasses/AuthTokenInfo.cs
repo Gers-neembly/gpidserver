@@ -10,6 +10,6 @@ namespace Neembly.GPIDServer.SharedClasses
         public int LifeTime { get; set; }
         public string ApiUrl { get; set; }
         public string ApiName { get; set; }
-        public string ApiRequest { get; set; }
+        public string ApiScope { get; set; }
     }
 }

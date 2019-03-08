@@ -10,48 +10,51 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
 {
     public class ExtensionProviders : IExtensionProviders
     {
+        #region Member Variables
         private readonly IdentityServerTools _identityServerTools;
+        #endregion
+
+        #region Constructor
         public ExtensionProviders(IdentityServerTools identityServerTools)
         {
             _identityServerTools = identityServerTools;
         }
+        #endregion
 
+        #region Actions
+
+        #region Player Register
         public async Task<bool> PlayerRegister(AuthTokenInfo authTokenInfo, PlayerRegisterInfo playerRegister)
         {
-            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime);
-            return await SendHttpWrite("api/players/register", authTokenInfo.ApiUrl, playerRegister, playerToken, HttpTransactType.Post);
+            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiName }, new[] { authTokenInfo.ApiScope });
+            var SysHttpClient = await SendHttpWrite("api/players/register", authTokenInfo.ApiUrl, playerToken, HttpTransactType.Post);
+            HttpResponseMessage response = await SysHttpClient.PostAsJsonAsync<PlayerRegisterInfo>("api/players/register", playerRegister);
+            return (response.StatusCode == System.Net.HttpStatusCode.OK);
         }
+        #endregion
 
+        #region Player Status
         public async Task<bool> PlayerSetStatus(AuthTokenInfo authTokenInfo, PlayerStatusInfo playerStatus)
         {
-            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime);
-            return await SendHttpWrite("api/players/status", authTokenInfo.ApiUrl, playerStatus, playerToken, HttpTransactType.Put);
+            var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiName }, new[] { authTokenInfo.ApiScope });
+            var SysHttpClient = await SendHttpWrite("api/players/status", authTokenInfo.ApiUrl, playerToken, HttpTransactType.Put);
+            HttpResponseMessage response = await SysHttpClient.PutAsJsonAsync<PlayerStatusInfo>("api/players/status", playerStatus);
+            return (response.StatusCode == System.Net.HttpStatusCode.OK);
         }
+        #endregion
 
         #region PrivateMethods
-        public async Task<bool> SendHttpWrite(string apiUrl, string authUrl, object data, string token, HttpTransactType httpType)
+        public async Task<HttpClient> SendHttpWrite(string apiUrl, string authUrl, string token, HttpTransactType httpType)
         {
-            var result = false;
-            try
-            {
-                HttpClient httpClient = new HttpClient();
-                httpClient.BaseAddress = new Uri($"https://{authUrl}");
-                httpClient.DefaultRequestHeaders.Accept.Clear();
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                HttpResponseMessage response = null;
-                if (httpType == HttpTransactType.Post)
-                    response = await httpClient.PostAsJsonAsync(apiUrl, data);
-                else if (httpType == HttpTransactType.Put)
-                   response = await httpClient.PutAsJsonAsync(apiUrl, data);
-                result = (response.StatusCode == System.Net.HttpStatusCode.OK);
-            }
-            catch
-            {
-                result = false;
-            }
-            return result;
+            HttpClient httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri($"https://{authUrl}");
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return httpClient;
         }
+        #endregion
+
         #endregion
 
 

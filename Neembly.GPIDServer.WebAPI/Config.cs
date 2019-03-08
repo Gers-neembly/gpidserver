@@ -1,6 +1,8 @@
 ﻿using IdentityServer4;
 using IdentityServer4.Models;
+using Neembly.GPIDServer.Constants;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
+using System;
 using System.Collections.Generic;
 
 namespace Neembly.GPIDServer.WebAPI
@@ -52,35 +54,48 @@ namespace Neembly.GPIDServer.WebAPI
             {
                 foreach (var authClientItem in authClients)
                 {
-                    result.Add(
-                        new Client
-                        {
-                            ClientId = authClientItem.ClientId,
-                            AllowedGrantTypes = GrantTypes.ResourceOwnerPasswordAndClientCredentials,
-                            AccessTokenType = AccessTokenType.Jwt,
-                            AccessTokenLifetime = authClientItem.LifeTime,
-                            IdentityTokenLifetime = authClientItem.LifeTime,
-                            UpdateAccessTokenClaimsOnRefresh = true,
-                            SlidingRefreshTokenLifetime = 30,
-                            AllowOfflineAccess = true,
-                            RefreshTokenExpiration = TokenExpiration.Absolute,
-                            RefreshTokenUsage = TokenUsage.OneTimeOnly,
-                            AlwaysSendClientClaims = true,
-                            ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
-                            AllowedScopes = {
+                    if (authClientItem.Type.Equals(GlobalConstants.AuthTypePassword, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        result.Add(
+                            new Client
+                            {
+                                ClientId = authClientItem.ClientId,
+                                AllowedGrantTypes = GrantTypes.ResourceOwnerPasswordAndClientCredentials,
+                                AccessTokenType = AccessTokenType.Jwt,
+                                AccessTokenLifetime = authClientItem.LifeTime,
+                                IdentityTokenLifetime = authClientItem.LifeTime,
+                                UpdateAccessTokenClaimsOnRefresh = true,
+                                SlidingRefreshTokenLifetime = 30,
+                                AllowOfflineAccess = true,
+                                RefreshTokenExpiration = TokenExpiration.Absolute,
+                                RefreshTokenUsage = TokenUsage.OneTimeOnly,
+                                AlwaysSendClientClaims = true,
+                                ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
+                                AllowedScopes = {
                                     IdentityServerConstants.StandardScopes.OpenId,
                                     IdentityServerConstants.StandardScopes.Profile,
                                     IdentityServerConstants.StandardScopes.Email,
                                     IdentityServerConstants.StandardScopes.OfflineAccess,
                                     authClientItem.ApiScope
+                                }
                             }
-                        }
-                    );
+                        );
+                    }
+                    if (authClientItem.Type.Equals(GlobalConstants.AuthTypeClientCredentials, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        result.Add(
+                            new Client
+                            {
+                                ClientId = authClientItem.ClientId,
+                                AllowedGrantTypes = GrantTypes.ClientCredentials,
+                                ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
+                                AllowedScopes = {authClientItem.ApiScope}
+                            }
+                        );
+                    }
                 }
             }
             return result;
         }
-
-               
     }
 }

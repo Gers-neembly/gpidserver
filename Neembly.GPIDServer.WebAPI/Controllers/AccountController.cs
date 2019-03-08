@@ -80,9 +80,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             string clientUsername = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
 
-            if (registerInfo.Password != registerInfo.ConfirmPassword)
-                return NotFound(GlobalConstants.ErrPasswordsMismatch);
-
             if (_dataAccess.CheckEmailAccount(registerInfo.Email, registerInfo.OperatorId))
                 return NotFound(GlobalConstants.ErrExistingEmailAccount);
 
@@ -180,34 +177,39 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             await _userManager.AddToRoleAsync(user, roleDesired);
         }
         #endregion
+
+        #region Token Generator
         private AuthTokenInfo GenerateToken(string hostedUrl)
         {
-            var ppWebScope = _authConfig.AuthClientInfoList.Where(s => s.ApiScope == GlobalConstants.ApiScope).FirstOrDefault();
+            var ppWebScope = _authConfig.AuthClientInfoList.Where(s => s.ClientId.Equals(GlobalConstants.ApiClientId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
             return (new AuthTokenInfo
             {
                 ApiUrl = hostedUrl,
                 ClientId = ppWebScope.ClientId,
-                LifeTime = ppWebScope.LifeTime
+                LifeTime = ppWebScope.LifeTime,
+                ApiName = ppWebScope.ApiScope,
+                ApiScope = ppWebScope.ApiScope
             });
         }
+        #endregion
 
         #region Create Player 
         private async Task<bool> CreatePlayerOnProductDB(PlayerRegisterInfo playerRegister, string hostedUrl)
         {
-            var authToken = GenerateToken(hostedUrl);
-            return await _extensionProviders.PlayerRegister(authToken, playerRegister);
+            return await _extensionProviders.PlayerRegister(GenerateToken(hostedUrl), playerRegister);
         }
         #endregion
 
         #region Set Status
         private async Task<bool> SetPlayerStatusOnProductDB(string username, string playerId, string newStatus, string hostedUrl)
         {
-            var authToken = GenerateToken(hostedUrl);
-            PlayerStatusInfo playerStatus = new PlayerStatusInfo {PlayerId = playerId,
+            return await _extensionProviders.PlayerSetStatus(GenerateToken(hostedUrl),
+                                                                new PlayerStatusInfo
+                                                                {
+                                                                    PlayerId = playerId,
                                                                     Status = newStatus,
                                                                     ModifiedBy = username
-                                                                };
-            return await _extensionProviders.PlayerSetStatus(authToken, playerStatus);
+                                                                });
         }
         #endregion
 

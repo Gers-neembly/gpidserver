@@ -20,6 +20,9 @@
 
         #region Auth
         public const string ApiScope = "Neembly.GP.Web.PlayerPortalApi";
+        public const string ApiClientId = "Neembly.PlayerPortalApi.Services";
+        public const string AuthTypePassword = "passwordGrant";
+        public const string AuthTypeClientCredentials = "clientCredentials";
         #endregion
 
     }
