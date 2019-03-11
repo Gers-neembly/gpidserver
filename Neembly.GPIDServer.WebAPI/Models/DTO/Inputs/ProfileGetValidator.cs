@@ -2,15 +2,15 @@
 
 namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
 {
-    public class ProfileUpdateDTOValidator : AbstractValidator<ProfileUpdateDTO>
+    public class ProfileGetValidator : AbstractValidator<ProfileGetDTO>
     {
         #region Constructor
-        public ProfileUpdateDTOValidator()
+        public ProfileGetValidator()
         {
             RuleFor(x => x.PlayerId).NotNull().NotEmpty();
             RuleFor(x => x.OperatorId).NotNull().NotEmpty().GreaterThan(0);
-            RuleFor(x => x.PlayerInfo).NotNull();
         }
         #endregion
     }
 }
+

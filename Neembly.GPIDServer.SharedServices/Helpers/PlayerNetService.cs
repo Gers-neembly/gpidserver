@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace Neembly.GPIDServer.SharedServices.Helpers
 {
-    public class ExtensionProviders : IExtensionProviders
+    public class PlayerNetService : IPlayerNetService
     {
         #region Member Variables
         private readonly IdentityServerTools _identityServerTools;
         #endregion
 
         #region Constructor
-        public ExtensionProviders(IdentityServerTools identityServerTools)
+        public PlayerNetService(IdentityServerTools identityServerTools)
         {
             _identityServerTools = identityServerTools;
         }
@@ -27,7 +27,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
         public async Task<bool> PlayerRegister(AuthTokenInfo authTokenInfo, PlayerRegisterInfo playerRegister)
         {
             var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiName }, new[] { authTokenInfo.ApiScope });
-            var SysHttpClient = await SendHttpWrite("api/players/register", authTokenInfo.ApiUrl, playerToken, HttpTransactType.Post);
+            var SysHttpClient = HttpClientSender("api/players/register", authTokenInfo.ApiUrl, playerToken, HttpTransactType.Post);
             HttpResponseMessage response = await SysHttpClient.PostAsJsonAsync<PlayerRegisterInfo>("api/players/register", playerRegister);
             return (response.StatusCode == System.Net.HttpStatusCode.OK);
         }
@@ -37,14 +37,14 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
         public async Task<bool> PlayerSetStatus(AuthTokenInfo authTokenInfo, PlayerStatusInfo playerStatus)
         {
             var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiName }, new[] { authTokenInfo.ApiScope });
-            var SysHttpClient = await SendHttpWrite("api/players/status", authTokenInfo.ApiUrl, playerToken, HttpTransactType.Put);
+            var SysHttpClient = HttpClientSender("api/players/status", authTokenInfo.ApiUrl, playerToken, HttpTransactType.Put);
             HttpResponseMessage response = await SysHttpClient.PutAsJsonAsync<PlayerStatusInfo>("api/players/status", playerStatus);
             return (response.StatusCode == System.Net.HttpStatusCode.OK);
         }
         #endregion
 
         #region PrivateMethods
-        public async Task<HttpClient> SendHttpWrite(string apiUrl, string authUrl, string token, HttpTransactType httpType)
+        public HttpClient HttpClientSender(string apiUrl, string authUrl, string token, HttpTransactType httpType)
         {
             HttpClient httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri($"https://{authUrl}");

@@ -12,8 +12,7 @@
         public const string ErrEmailValue = "REGV-010";
         public const string ErrEmailFormat = "REGV-011";
         public const string ErrCreateAccount = "REGD-001";
-        public const string ErrExistingEmailAccount = "REGD-002";
-        public const string ErrExistingUsernameAccount = "REGD-003";
+        public const string ErrExistingAccount = "REGD-002";
         public const string ErrUsernameAccountNotRegistered = "LOGD-001";
         public const string ErrUserAccountNotExisting = "LOGD-003";
         #endregion
@@ -24,6 +23,11 @@
         public const string AuthTypePassword = "passwordGrant";
         public const string AuthTypeClientCredentials = "clientCredentials";
         #endregion
+
+        #region Operator Tag Ids
+        public const int PlayerIdTagStarts = 10000;
+        #endregion
+
 
     }
 }

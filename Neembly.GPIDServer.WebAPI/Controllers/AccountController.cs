@@ -24,7 +24,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IDataAccess _dataAccess;
-        private readonly IExtensionProviders _extensionProviders;
+        private readonly IPlayerNetService _playerNetServices;
         private readonly IEmailDispatcher _emailDispatcher;
         private readonly IEmailQueueService _emailQueueService;
         private readonly AuthClientConfiguration _authConfig;
@@ -38,7 +38,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             AuthClientConfiguration authConfig,
             IConfiguration configuration,
             IDataAccess dataAccess,
-            IExtensionProviders extensionProviders,
+            IPlayerNetService playerNetServices,
             IEmailDispatcher emailDispatcher,
             IEmailQueueService emailQueueService
             )
@@ -49,7 +49,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _configuration = configuration;
             _authConfig = authConfig;
             _dataAccess = dataAccess;
-            _extensionProviders = extensionProviders;
+            _playerNetServices = playerNetServices;
             _emailDispatcher = emailDispatcher;
             _emailQueueService = emailQueueService;
         }
@@ -60,16 +60,24 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region Profiles
         [Route("profile")]
         [HttpPut]
-        public async Task<IActionResult> Profile([FromBody] ProfileUpdateDTO profileUpdateInfo)
+        public async Task<IActionResult> SetProfile([FromBody] ProfileUpdateDTO profileUpdateInfo)
         {
-            var dataInfo = await _dataAccess.ProfileRequestChange(profileUpdateInfo.PlayerId, new PlayerInfo
-            {
-                FirstName = profileUpdateInfo.PlayerInfo.FirstName,
-                LastName = profileUpdateInfo.PlayerInfo.LastName,
-                MobileNo = profileUpdateInfo.PlayerInfo.MobileNo,
-                MobilePrefix = profileUpdateInfo.PlayerInfo.MobilePrefix
-            });
+            var dataInfo = await _dataAccess.ProfileRequestChange(profileUpdateInfo.PlayerId, profileUpdateInfo.OperatorId,
+                new PlayerInfo
+                {
+                    FirstName = profileUpdateInfo.PlayerInfo.FirstName,
+                    LastName = profileUpdateInfo.PlayerInfo.LastName,
+                    MobileNo = profileUpdateInfo.PlayerInfo.MobileNo,
+                    MobilePrefix = profileUpdateInfo.PlayerInfo.MobilePrefix
+                });
             return Ok(dataInfo);
+        }
+
+        [Route("profile")]
+        [HttpGet]
+        public async Task<IActionResult> GetProfile([FromBody] ProfileGetDTO profileGetInfo)
+        {
+            return Ok(await (Task.Run(()=>_dataAccess.ProfileRequestGet(profileGetInfo.PlayerId, profileGetInfo.OperatorId))));
         }
         #endregion
 
@@ -78,53 +86,63 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerInfo)
         {
-            string clientUsername = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
-
-            if (_dataAccess.CheckEmailAccount(registerInfo.Email, registerInfo.OperatorId))
-                return NotFound(GlobalConstants.ErrExistingEmailAccount);
-
-            if (_dataAccess.CheckUsernameAccount(clientUsername, registerInfo.OperatorId))
-                return NotFound(GlobalConstants.ErrExistingUsernameAccount);
-
-            var user = new AppUser { UserName = clientUsername, Email = registerInfo.Email,
-                                     DisplayUsername = registerInfo.UserName,
-                                     OperatorId = registerInfo.OperatorId,
-                                     RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
-                                    };
-
-            var result = await _userManager.CreateAsync(user, registerInfo.Password);
-            if (!result.Succeeded)
-                return NotFound(GlobalConstants.ErrCreateAccount);
-
+            AppUser user = null;
             string urlReferer = Request.Headers["Origin"].ToString();
-            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
-            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
-            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
 
-            user.PlayerId = await _dataAccess.CreatePlayerById(user.Id, user.OperatorId, registerInfo.PlayerInfo);
-            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", user.OperatorId.ToString()));
-            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", user.PlayerId));
+            if (registerInfo.Password != registerInfo.ConfirmPassword)
+                return NotFound(GlobalConstants.ErrPasswordsMismatch);
 
-            if (registerInfo.Roles != null)
+            if (_dataAccess.UserOperatorExists(registerInfo.Email, registerInfo.UserName, registerInfo.OperatorId))
+                return NotFound(GlobalConstants.ErrExistingAccount);
+
+            AppUser ppUser = _dataAccess.GetAppUser(registerInfo.Email, registerInfo.UserName);
+            string userId = string.Empty;
+
+            if (ppUser != null)
+                userId = ppUser.Id;
+            else
             {
-                foreach (var roleItem in registerInfo.Roles)
-                    await CreateUserRoles(user, roleItem);
+                user = new AppUser { UserName = registerInfo.UserName, Email = registerInfo.Email,
+                                        DisplayUsername = registerInfo.UserName,
+                                        RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
+                                   };
+                var result = await _userManager.CreateAsync(user, registerInfo.Password);
+                if (!result.Succeeded)
+                    return NotFound(GlobalConstants.ErrCreateAccount);
+
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
+
+                if (registerInfo.Roles != null)
+                {
+                    foreach (var roleItem in registerInfo.Roles)
+                        await CreateUserRoles(user, roleItem);
+                }
+                userId = user.Id;
             }
+
+            int newPlayerId = await _dataAccess.CreatePlayerById(userId, registerInfo.OperatorId, registerInfo.PlayerInfo);
+            if (user != null)
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", newPlayerId.ToString()));
+
 
             var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                                             var callbackUrl = Url.Action(
                                             "verifyemail", "account",
                                             values: new { userId = user.Id, code = emailConfirmationToken,
-                                                            operatorId = user.OperatorId, urlreferer = urlReferer,
-                                                            urlhosted = registerInfo.HostedUrl},
-                                            protocol: Request.Scheme);
+                                                          playerId = newPlayerId, operatorId = registerInfo.OperatorId,
+                                                          urlreferer = urlReferer, urlhosted = registerInfo.HostedUrl},
+                                                          protocol: Request.Scheme);
 
             bool registerationCompleted = await CreatePlayerOnProductDB(
                                     new PlayerRegisterInfo
                                     {
                                         Email = user.Email,
                                         Username = user.DisplayUsername,
-                                        PlayerAccountId = user.PlayerId,
+                                        PlayerAccountId = $"{registerInfo.OperatorId}-{newPlayerId:D8}",
+                                        PlayerId = newPlayerId,
                                         OperatorId = registerInfo.OperatorId,
                                         CreatedBy = user.DisplayUsername
                                     },
@@ -133,8 +151,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (!registerationCompleted)
                 return NotFound(GlobalConstants.ErrCreateAccount);
 
-            await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, user.OperatorId);
-            await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, user.OperatorId);
+            await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, registerInfo.OperatorId);
+            await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, registerInfo.OperatorId);
 
             return Ok();
         }
@@ -143,7 +161,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region  Verify Email 
         [Route("verifyemail")]
         [HttpGet]
-        public async Task<IActionResult> VerifyEmail(string userId, string code, string operatorId, string urlreferer, string urlhosted)
+        public async Task<IActionResult> VerifyEmail(string userId, string code, int playerId, int operatorId, string urlreferer, string urlhosted)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -152,10 +170,10 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var emailConfirmationResult = await _userManager.ConfirmEmailAsync(user, code);
             if (!emailConfirmationResult.Succeeded)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
-            if (!string.IsNullOrEmpty(user.PlayerId))
+            if (operatorId > 0)
             {
                 await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
-                await SetPlayerStatusOnProductDB(user.DisplayUsername, user.PlayerId, "Active", urlhosted);
+                await SetPlayerStatusOnProductDB(user.DisplayUsername, playerId, operatorId, "Active", urlhosted);
             }
             if (string.IsNullOrEmpty(urlreferer))
                 return Content($"Username: {user.DisplayUsername}, Email: {user.Email} activated. Thank you.");
@@ -196,17 +214,18 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region Create Player 
         private async Task<bool> CreatePlayerOnProductDB(PlayerRegisterInfo playerRegister, string hostedUrl)
         {
-            return await _extensionProviders.PlayerRegister(GenerateToken(hostedUrl), playerRegister);
+            return await _playerNetServices.PlayerRegister(GenerateToken(hostedUrl), playerRegister);
         }
         #endregion
 
         #region Set Status
-        private async Task<bool> SetPlayerStatusOnProductDB(string username, string playerId, string newStatus, string hostedUrl)
+        private async Task<bool> SetPlayerStatusOnProductDB(string username, int playerId, int operatorId, string newStatus, string hostedUrl)
         {
-            return await _extensionProviders.PlayerSetStatus(GenerateToken(hostedUrl),
+            return await _playerNetServices.PlayerSetStatus(GenerateToken(hostedUrl),
                                                                 new PlayerStatusInfo
                                                                 {
                                                                     PlayerId = playerId,
+                                                                    OperatorId = operatorId,
                                                                     Status = newStatus,
                                                                     ModifiedBy = username
                                                                 });

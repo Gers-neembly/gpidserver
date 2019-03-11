@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Neembly.GPIDServer.Persistence.Migrations
 {
-    public partial class initial : Migration
+    public partial class initial_gpidentity : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -42,8 +42,6 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     LockoutEnabled = table.Column<bool>(nullable: false),
                     AccessFailedCount = table.Column<int>(nullable: false),
                     DisplayUsername = table.Column<string>(nullable: true),
-                    OperatorId = table.Column<int>(nullable: false),
-                    PlayerId = table.Column<string>(nullable: true),
                     RegistrationStatus = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -69,7 +67,10 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                 name: "Players",
                 columns: table => new
                 {
-                    PlayerId = table.Column<string>(nullable: false),
+                    Id = table.Column<Guid>(nullable: false),
+                    NetUserId = table.Column<string>(nullable: true),
+                    PlayerId = table.Column<int>(nullable: false),
+                    OperatorId = table.Column<int>(nullable: false),
                     FirstName = table.Column<string>(nullable: true),
                     LastName = table.Column<string>(nullable: true),
                     MobilePrefix = table.Column<string>(nullable: true),
@@ -77,7 +78,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Players", x => x.PlayerId);
+                    table.PrimaryKey("PK_Players", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(

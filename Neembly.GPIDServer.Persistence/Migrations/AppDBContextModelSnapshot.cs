@@ -153,15 +153,11 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256);
 
-                    b.Property<int>("OperatorId");
-
                     b.Property<string>("PasswordHash");
 
                     b.Property<string>("PhoneNumber");
 
                     b.Property<bool>("PhoneNumberConfirmed");
-
-                    b.Property<string>("PlayerId");
 
                     b.Property<string>("RegistrationStatus");
 
@@ -200,7 +196,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
 
             modelBuilder.Entity("Neembly.GPIDServer.Persistence.Entities.Player", b =>
                 {
-                    b.Property<string>("PlayerId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
 
                     b.Property<string>("FirstName");
@@ -211,7 +207,13 @@ namespace Neembly.GPIDServer.Persistence.Migrations
 
                     b.Property<string>("MobilePrefix");
 
-                    b.HasKey("PlayerId");
+                    b.Property<string>("NetUserId");
+
+                    b.Property<int>("OperatorId");
+
+                    b.Property<int>("PlayerId");
+
+                    b.HasKey("Id");
 
                     b.ToTable("Players");
                 });

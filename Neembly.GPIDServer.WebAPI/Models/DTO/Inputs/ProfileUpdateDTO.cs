@@ -4,7 +4,8 @@ namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
 {
     public class ProfileUpdateDTO
     {
-        public string PlayerId { get; set; } 
+        public int PlayerId { get; set; }
+        public int OperatorId { get; set; }
         public PlayerInfo PlayerInfo { get; set; }
     }
 }

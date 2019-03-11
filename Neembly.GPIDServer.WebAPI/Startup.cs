@@ -70,7 +70,7 @@ namespace Neembly.GPIDServer.WebAPI
             services.AddScoped<IDataAccess, DataAccess>();
             services.AddScoped<IEmailDispatcher, EmailDispatcher>();
             services.AddScoped<IEmailQueueService, DbEmailQueueService>();
-            services.AddScoped<IExtensionProviders, ExtensionProviders>();
+            services.AddScoped<IPlayerNetService, PlayerNetService>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
 
             services.AddCors();
