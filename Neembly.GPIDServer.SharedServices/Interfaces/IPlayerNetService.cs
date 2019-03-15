@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Neembly.GPIDServer.SharedServices.Interfaces
 {
-    public interface IExtensionProviders
+    public interface IPlayerNetService
     {
         Task<bool> PlayerRegister(AuthTokenInfo authTokenInfo, PlayerRegisterInfo playerRegister);
         Task<bool> PlayerSetStatus(AuthTokenInfo authTokenInfo, PlayerStatusInfo playerStatus);

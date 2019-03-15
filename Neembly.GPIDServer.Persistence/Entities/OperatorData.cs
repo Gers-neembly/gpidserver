@@ -9,9 +9,7 @@ namespace Neembly.GPIDServer.Persistence.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public string OperatorId { get; set; }
+        public int OperatorId { get; set; }
         public long TagId { get; set; }
-
-
     }
 }

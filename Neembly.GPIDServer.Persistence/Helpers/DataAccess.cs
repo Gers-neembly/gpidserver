@@ -1,7 +1,9 @@
-﻿using Neembly.GPIDServer.Persistence.Entities;
+﻿using Neembly.GPIDServer.Constants;
+using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,49 +18,63 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             _appDBContext = appDBContext;
         }
 
-        public async Task<string> CreatePlayerById(string userId, string operatorId, PlayerInfo playerInfo = null)
+        public async Task<int> CreatePlayerById(string userId, int operatorId, PlayerInfo playerInfo = null)
         {
-            var player = _appDBContext.Users.Where(r => r.Id.Equals(userId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
-            if (player == null)
-                return string.Empty;
-            long tagId = 1;
-            var operatorRecord = _appDBContext.OperatorData.Where(r => r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
-            if (operatorRecord == null)
-            {
-                _appDBContext.OperatorData.Add(new OperatorData { OperatorId = operatorId, TagId = 1 });
-            }
+            int resultPlayerId = 0;
+
+            var playerProfile = _appDBContext.Players.Where(r => r.NetUserId.Equals(userId, StringComparison.InvariantCultureIgnoreCase)
+                                                            && r.OperatorId == operatorId).FirstOrDefault();
+            if (playerProfile != null)
+                resultPlayerId = playerProfile.PlayerId;
             else
             {
-                tagId = operatorRecord.TagId + 1;
-                operatorRecord.TagId = tagId;
+                long tagId = GlobalConstants.PlayerIdTagStarts;
+                var operatorRecord = _appDBContext.OperatorData.Where(r => r.OperatorId == operatorId).FirstOrDefault();
+                if (operatorRecord == null)
+                    _appDBContext.OperatorData.Add(new OperatorData { OperatorId = operatorId, TagId = 1 });
+                else
+                {
+                    tagId = operatorRecord.TagId + 1;
+                    operatorRecord.TagId = tagId;
+                    _appDBContext.Update(operatorRecord);
+                }
+
+                _appDBContext.Players.Add(new Player
+                {
+                    OperatorId = operatorId,
+                    NetUserId = userId,
+                    FirstName = playerInfo == null ? string.Empty : playerInfo.FirstName,
+                    LastName = playerInfo == null ? string.Empty : playerInfo.LastName,
+                    MobilePrefix = playerInfo == null ? string.Empty : playerInfo.MobilePrefix,
+                    MobileNo = playerInfo == null ? string.Empty : playerInfo.MobileNo,
+                    PlayerId = (int)tagId
+                });
+
+                resultPlayerId = (int)tagId;
+                await _appDBContext.SaveChangesAsync();
             }
-
-            string tagFormatted = $"{operatorId}-{tagId:D8}";
-
-            _appDBContext.Players.Add(new Player
-            { PlayerId = tagFormatted,
-              FirstName = playerInfo == null ? string.Empty : playerInfo.FirstName,
-              LastName = playerInfo == null ? string.Empty : playerInfo.LastName,
-              MobilePrefix = playerInfo == null ? string.Empty : playerInfo.MobilePrefix,
-              MobileNo = playerInfo == null ? string.Empty : playerInfo.MobileNo,
-            });
-            player.PlayerId = tagFormatted;
-
-            await _appDBContext.SaveChangesAsync();
-            return tagFormatted;
+            return (resultPlayerId);
         }
 
-        public AppUser GetAppUser(string email, string username, string operatorId)
+        public AppUser GetAppUser(string email, string username)
         {
-            var playerInfo =  _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
-                                                            && r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
-            if (playerInfo != null)
-              return playerInfo;
-
-            playerInfo = _appDBContext.Users.Where(r => r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)
-                                                        && r.OperatorId.Equals(operatorId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
-            return playerInfo;
+            return _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
+                                             && r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
         }
+
+        public IEnumerable<int> GetPlayersOperators(string netUserId)
+        {
+            return _appDBContext.Players.Where(r => r.NetUserId.Equals(netUserId, StringComparison.InvariantCultureIgnoreCase)).Select(r => r.OperatorId).ToList();
+        }
+
+
+        public bool UserOperatorExists(string email, string username, int operatorId)
+        {
+            var appUser = _appDBContext.Users.Where(r => r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)
+                                                          || r.Email.ToLower() == email.ToLower()).FirstOrDefault();
+            return (appUser == null) ? false : CheckOperatorAssignment(appUser.Id, operatorId) != null;
+        }
+
 
         public async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus)
         {
@@ -75,9 +91,9 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             }
         }
 
-        public async Task<bool> ProfileRequestChange(string playerId, PlayerInfo playerInfo)
+        public async Task<bool> ProfileRequestChange(int playerId, int operatorId, PlayerInfo playerInfo)
         {
-            var playerRecord = _appDBContext.Players.Where(r => r.PlayerId.Equals(playerId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            var playerRecord = _appDBContext.Players.Where(r => r.PlayerId == playerId && r.OperatorId == operatorId).FirstOrDefault();
             if (playerRecord == null)
                 return false;
             playerRecord.FirstName = playerInfo.FirstName;
@@ -87,6 +103,25 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             return (await _appDBContext.SaveChangesAsync() > 0);
         }
 
+        public PlayerInfo ProfileRequestGet(int playerId, int operatorId)
+        {
+            var playerRecord = _appDBContext.Players.Where(r => r.PlayerId == playerId && r.OperatorId == operatorId).FirstOrDefault();
+            return (new PlayerInfo
+            {
+                FirstName = playerRecord.FirstName,
+                LastName = playerRecord.LastName,
+                MobileNo = playerRecord.MobileNo,
+                MobilePrefix = playerRecord.MobilePrefix
+            });
+        }
+
+        #region Private Methods
+        private Player CheckOperatorAssignment(string netUserId, int operatorId)
+        {
+            return _appDBContext.Players.Where(r => r.NetUserId.Equals(netUserId, StringComparison.InvariantCultureIgnoreCase)
+                                                    && r.OperatorId == operatorId).FirstOrDefault();
+        }
+        #endregion
 
     }
 }
