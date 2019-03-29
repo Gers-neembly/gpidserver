@@ -89,8 +89,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             AppUser user = null;
             string urlReferer = Request.Headers["Origin"].ToString();
 
-            if (registerInfo.Password != registerInfo.ConfirmPassword)
-                return NotFound(GlobalConstants.ErrPasswordsMismatch);
+            if (!registerInfo.BoUser)
+            {
+                if (registerInfo.Password != registerInfo.ConfirmPassword)
+                    return NotFound(GlobalConstants.ErrPasswordsMismatch);
+            }
 
             if (_dataAccess.UserOperatorExists(registerInfo.Email, registerInfo.UserName, registerInfo.OperatorId))
                 return NotFound(GlobalConstants.ErrExistingAccount);
@@ -124,6 +127,10 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             }
 
             int newPlayerId = await _dataAccess.CreatePlayerById(userId, registerInfo.OperatorId, registerInfo.PlayerInfo);
+            if (registerInfo.BoUser)
+            {
+                return Ok(newPlayerId);
+            }
             if (user != null)
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", newPlayerId.ToString()));
 
