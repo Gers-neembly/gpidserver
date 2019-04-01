@@ -1,5 +1,6 @@
 ﻿using FluentValidation.AspNetCore;
 using IdentityServer4.Services;
+using IdentityServer4.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -16,6 +17,7 @@ using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Services;
+using Neembly.GPIDServer.WebAPI.Validator;
 
 namespace Neembly.GPIDServer.WebAPI
 {
@@ -72,6 +74,7 @@ namespace Neembly.GPIDServer.WebAPI
             services.AddScoped<IEmailQueueService, DbEmailQueueService>();
             services.AddScoped<IPlayerNetService, PlayerNetService>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
+            services.AddTransient<IResourceOwnerPasswordValidator, CustomResourceOwnerPasswordValidator>();
 
             services.AddCors();
             services
