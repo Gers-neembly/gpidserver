@@ -88,21 +88,23 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             AppUser user = null;
             string urlReferer = Request.Headers["Origin"].ToString();
+            string userName = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
 
             if (registerInfo.Password != registerInfo.ConfirmPassword)
                 return NotFound(GlobalConstants.ErrPasswordsMismatch);
 
-            if (_dataAccess.UserOperatorExists(registerInfo.Email, registerInfo.UserName, registerInfo.OperatorId))
+            if (_dataAccess.UserOperatorExists(registerInfo.Email, userName, registerInfo.OperatorId))
                 return NotFound(GlobalConstants.ErrExistingAccount);
 
-            AppUser ppUser = _dataAccess.GetAppUser(registerInfo.Email, registerInfo.UserName);
+
+            AppUser ppUser = _dataAccess.GetAppUser(registerInfo.Email, userName);
             string userId = string.Empty;
 
             if (ppUser != null)
                 userId = ppUser.Id;
             else
             {
-                user = new AppUser { UserName = registerInfo.UserName, Email = registerInfo.Email,
+                user = new AppUser { UserName = userName, Email = registerInfo.Email,
                                         DisplayUsername = registerInfo.UserName,
                                         RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
                                    };
@@ -127,6 +129,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (user != null)
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", newPlayerId.ToString()));
 
+            await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
 
             var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                                             var callbackUrl = Url.Action(
@@ -171,10 +174,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (!emailConfirmationResult.Succeeded)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             if (operatorId > 0)
-            {
-                await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
-                await SetPlayerStatusOnProductDB(user.DisplayUsername, playerId, operatorId, "Active", urlhosted);
-            }
+                await SetRegistrationStatus(userId, RegistrationStatusNames.Verified);
             if (string.IsNullOrEmpty(urlreferer))
                 return Content($"Username: {user.DisplayUsername}, Email: {user.Email} activated. Thank you.");
             return Redirect(urlreferer);
