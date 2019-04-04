@@ -56,6 +56,16 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             return (resultPlayerId);
         }
 
+        public async Task<bool> DeletePlayerByUserId(string userId, int operatorId)
+        {
+            var playerProfile = _appDBContext.Players.Where(r => r.NetUserId.Equals(userId, StringComparison.InvariantCultureIgnoreCase)
+                                                            && r.OperatorId == operatorId).FirstOrDefault();
+            if (playerProfile != null)
+                _appDBContext.Players.Remove(playerProfile);
+            return await _appDBContext.SaveChangesAsync() > 0;
+        }
+
+
         public AppUser GetAppUser(string email, string username)
         {
             return _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
