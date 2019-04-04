@@ -8,8 +8,10 @@ namespace Neembly.GPIDServer.SharedClasses
         Pending = 1,
         [Description("Registered")]
         Registered = 2,
+        [Description("Verified")]
+        Verified = 3,
         [Description("Abandon")]
-        Abandon = 3,
+        Abandon = 4,
     }
 
     public enum HttpTransactType
