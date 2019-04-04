@@ -8,7 +8,9 @@ namespace Neembly.GPIDServer.SharedClasses
         Pending = 1,
         [Description("Registered")]
         Registered = 2,
-        [Description("Abandon")]
+        [Description("Verified")]
+        Verified = 3,
+        [Description("Abandoned")]
         Abandon = 3,
     }
 
