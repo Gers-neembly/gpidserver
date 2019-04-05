@@ -86,7 +86,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> DeletePlayer([FromBody] PlayerDeleteDTO playerInfo)
         {
-            AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, playerInfo.Username);
+            string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
+            AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, userName);
             var result = await _userManager.DeleteAsync(ppUser);
             var success = await _dataAccess.DeletePlayerByUserId(ppUser.Id, playerInfo.OperatorId);
             return Ok();
