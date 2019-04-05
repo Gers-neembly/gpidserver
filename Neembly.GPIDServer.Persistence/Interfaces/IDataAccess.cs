@@ -14,5 +14,6 @@ namespace Neembly.GPIDServer.Persistence.Interfaces
         Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus);
         Task<bool> ProfileRequestChange(int playerId, int operatorId, PlayerInfo playerInfo);
         PlayerInfo ProfileRequestGet(int playerId, int operatorId);
+        Task<bool> DeletePlayerByUserId(string userId, int operatorId);
     }
 }

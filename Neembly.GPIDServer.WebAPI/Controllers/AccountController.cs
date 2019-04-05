@@ -81,6 +81,18 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         }
         #endregion
 
+        #region DeletePlayer
+        [Route("delete")]
+        [HttpPost]
+        public async Task<IActionResult> DeletePlayer([FromBody] PlayerDeleteDTO playerInfo)
+        {
+            string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
+            AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, userName);
+            var result = await _userManager.DeleteAsync(ppUser);
+            var success = await _dataAccess.DeletePlayerByUserId(ppUser.Id, playerInfo.OperatorId);
+            return Ok();
+        }
+
         #region Register
         [Route("register")]
         [HttpPost]
@@ -188,8 +200,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         }
         #endregion
 
-        #region PrivateMethods
-
         #region Create User Roles
         private async Task CreateUserRoles(AppUser user, string roleDesired)
         {
@@ -275,10 +285,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             }
         }
         #endregion
-
         #endregion
-
         #endregion
-
     }
 }
