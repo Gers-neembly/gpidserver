@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Neembly.GPIDServer.Persistence.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20190118033620_registerStatus")]
-    partial class registerStatus
+    [Migration("20190311085912_initial_gpidentity")]
+    partial class initial_gpidentity
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -155,15 +155,11 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256);
 
-                    b.Property<string>("OperatorId");
-
                     b.Property<string>("PasswordHash");
 
                     b.Property<string>("PhoneNumber");
 
                     b.Property<bool>("PhoneNumberConfirmed");
-
-                    b.Property<string>("PlayerId");
 
                     b.Property<string>("RegistrationStatus");
 
@@ -191,7 +187,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("OperatorId");
+                    b.Property<int>("OperatorId");
 
                     b.Property<long>("TagId");
 
@@ -202,14 +198,24 @@ namespace Neembly.GPIDServer.Persistence.Migrations
 
             modelBuilder.Entity("Neembly.GPIDServer.Persistence.Entities.Player", b =>
                 {
-                    b.Property<string>("PlayerId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
 
                     b.Property<string>("FirstName");
 
                     b.Property<string>("LastName");
 
-                    b.HasKey("PlayerId");
+                    b.Property<string>("MobileNo");
+
+                    b.Property<string>("MobilePrefix");
+
+                    b.Property<string>("NetUserId");
+
+                    b.Property<int>("OperatorId");
+
+                    b.Property<int>("PlayerId");
+
+                    b.HasKey("Id");
 
                     b.ToTable("Players");
                 });

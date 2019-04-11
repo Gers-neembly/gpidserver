@@ -1,12 +1,17 @@
-﻿using Neembly.GPIDServer.SharedClasses;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Neembly.GPIDServer.Persistence.Entities
 {
     public class Player
     {
         [Key]
-        public string PlayerId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid Id { get; set; }
+        public string NetUserId { get; set; }
+        public int PlayerId { get; set; }
+        public int OperatorId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string MobilePrefix { get; set; }

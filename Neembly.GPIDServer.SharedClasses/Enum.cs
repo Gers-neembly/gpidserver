@@ -8,7 +8,9 @@ namespace Neembly.GPIDServer.SharedClasses
         Pending = 1,
         [Description("Registered")]
         Registered = 2,
-        [Description("Abandon")]
+        [Description("Verified")]
+        Verified = 3,
+        [Description("Abandoned")]
         Abandon = 3,
     }
 
@@ -20,6 +22,16 @@ namespace Neembly.GPIDServer.SharedClasses
         Put = 2,
         [Description("Get")]
         Get = 3,
+    }
+
+    public enum EmailSendingStatus
+    {
+        [Description("Pending")]
+        Pending = 1,
+        [Description("Sent")]
+        Registered = 2,
+        [Description("Failed")]
+        Abandon = 3,
     }
 
 }

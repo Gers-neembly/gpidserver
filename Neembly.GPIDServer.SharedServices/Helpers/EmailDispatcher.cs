@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -25,28 +26,46 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             _smtpClient.EnableSsl = true;
         }
 
-        public async Task SendActivationLink(string emailLink, string name, string toEmail)
+        public EmailMessage CreateEmailActivationLink(string emailLink, string name, string toEmail, int operatorId)
         {
             string emailBody = $"<html><body><h2>Hi {name},</h2><h1>Thank you for your registration</h1><a href = {emailLink}>Please Click to confirm your gaming account</a></body></html>";
-             EmailInfo emailInfo = new EmailInfo
+            EmailMessage emailMessage = new EmailMessage
             {
-                From = "info@neembly.com",
-                To = toEmail,
+                Sender = "info@neembly.com",
+                Receipients = toEmail,
                 Subject = "Activate Your Game Account",
-                Body = emailBody
+                Message = emailBody,
+                OperatorId = operatorId,
+                IsHtml = true
             };
-            await SendMessage(emailInfo);
+            emailMessage.Status = Enum.GetName(typeof(EmailSendingStatus), EmailSendingStatus.Pending);
+            return emailMessage;
         }
 
-        public async Task SendWelcomeEmail(string referer, string name, string toEmail)
+        public EmailMessage CreateWelcomeEmail(string referer, string name, string toEmail, int operatorId)
         {
             string emailBody = $"<html><body><h2>Welcome to {referer}</h2><h1>Hi {name},</h1><p>Please check your activation link that we sent you to start playing</p></body></html>";
-            EmailInfo emailInfo = new EmailInfo
+            EmailMessage emailMessage = new EmailMessage
             {
-                From = "info@neembly.com",
-                To = toEmail,
+                Sender = "info@neembly.com",
+                Receipients = toEmail,
                 Subject = $"Welcome {name}! from {referer}",
-                Body = emailBody
+                Message = emailBody,
+                OperatorId = operatorId,
+                IsHtml = true,
+            };
+            emailMessage.Status = Enum.GetName(typeof(EmailSendingStatus), EmailSendingStatus.Pending);
+            return emailMessage;
+        }
+
+        public async Task EmailSender(EmailMessage emailMessage)
+        {
+             EmailInfo emailInfo = new EmailInfo
+            {
+                From = emailMessage.Sender,
+                To = emailMessage.Receipients,
+                Subject = emailMessage.Subject,
+                Body = emailMessage.Message
             };
             await SendMessage(emailInfo);
         }

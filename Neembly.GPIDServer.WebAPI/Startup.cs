@@ -1,5 +1,6 @@
-﻿using IdentityServer4.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using FluentValidation.AspNetCore;
+using IdentityServer4.Services;
+using IdentityServer4.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -13,8 +14,10 @@ using Neembly.GPIDServer.Persistence.Helpers;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedServices.Helpers;
 using Neembly.GPIDServer.SharedServices.Interfaces;
+using Neembly.GPIDServer.WebAPI.Filters;
+using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Services;
-using System.IdentityModel.Tokens.Jwt;
+using Neembly.GPIDServer.WebAPI.Validator;
 
 namespace Neembly.GPIDServer.WebAPI
 {
@@ -34,6 +37,8 @@ namespace Neembly.GPIDServer.WebAPI
             services.AddDbContext<AppDBContext>(options =>
                                                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddDbContext<UtilsDBContext>(options =>
+                                               options.UseNpgsql(Configuration.GetConnectionString("UtilsConnection")));
             //// Add Identity services
             services.AddIdentity<AppUser, IdentityRole>(user =>
                     {
@@ -47,26 +52,35 @@ namespace Neembly.GPIDServer.WebAPI
                     .AddEntityFrameworkStores<AppDBContext>()
                     .AddDefaultTokenProviders();
 
+            var authClientConfig = new AuthClientConfiguration();
+            Configuration.Bind("AuthClientConfiguration", authClientConfig);
+            services.AddSingleton(authClientConfig);
+
             services.AddIdentityServer()
                     .AddDeveloperSigningCredential()
                     .AddInMemoryPersistedGrants()
                     .AddInMemoryIdentityResources(Config.GetIdentityResources())
-                    .AddInMemoryApiResources(Config.GetApiResources())
-                    .AddInMemoryClients(Config.GetClients())
+                    .AddInMemoryApiResources(Config.GetApiResources(authClientConfig.AuthClientResourcesList))
+                    .AddInMemoryClients(Config.GetClients(authClientConfig.AuthClientInfoList))
                     .AddAspNetIdentity<AppUser>();
 
             services.Configure<IdentityOptions>(o => {
-                o.SignIn.RequireConfirmedEmail = true;
+                o.SignIn.RequireConfirmedEmail = false;
             });
 
             // dependency injections
             services.AddScoped<IDataAccess, DataAccess>();
             services.AddScoped<IEmailDispatcher, EmailDispatcher>();
-            services.AddScoped<IExtensionProviders, ExtensionProviders>();
+            services.AddScoped<IEmailQueueService, DbEmailQueueService>();
+            services.AddScoped<IPlayerNetService, PlayerNetService>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
+            services.AddTransient<IResourceOwnerPasswordValidator, CustomResourceOwnerPasswordValidator>();
 
             services.AddCors();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services
+                .AddMvc(options => options.Filters.Add(typeof(CustomExceptionFilterAttribute)))
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddFluentValidation(fv => fv.RegisterValidatorsFromAssembly(typeof(Exceptions.ValidationException).Assembly));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

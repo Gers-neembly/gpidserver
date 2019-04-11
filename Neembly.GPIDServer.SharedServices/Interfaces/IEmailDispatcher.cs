@@ -5,7 +5,8 @@ namespace Neembly.GPIDServer.SharedServices.Interfaces
 {
     public interface IEmailDispatcher
     {
-        Task SendActivationLink(string emailLink, string name, string toEmail);
-        Task SendWelcomeEmail(string referer, string name, string toEmail);
+        EmailMessage CreateEmailActivationLink(string emailLink, string name, string toEmail, int operatorId);
+        EmailMessage CreateWelcomeEmail(string referer, string name, string toEmail, int operatorId);
+        Task EmailSender(EmailMessage emailMessage);
     }
 }

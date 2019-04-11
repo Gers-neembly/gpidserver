@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,8 @@ using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
-using Neembly.GPIDServer.WebAPI.Models.DTO;
+using Neembly.GPIDServer.WebAPI.Models.Configs;
+using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -18,219 +18,189 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+        #region Member Variable
         private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IDataAccess _dataAccess;
+        private readonly IPlayerNetService _playerNetServices;
         private readonly IEmailDispatcher _emailDispatcher;
-        private readonly IExtensionProviders _extensionProviders;
+        private readonly IEmailQueueService _emailQueueService;
+        private readonly AuthClientConfiguration _authConfig;
+        #endregion
 
+        #region Constructor
         public AccountController(
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager,
             RoleManager<IdentityRole> roleManager,
+            AuthClientConfiguration authConfig,
             IConfiguration configuration,
             IDataAccess dataAccess,
+            IPlayerNetService playerNetServices,
             IEmailDispatcher emailDispatcher,
-            IExtensionProviders extensionProviders
+            IEmailQueueService emailQueueService
             )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _authConfig = authConfig;
             _dataAccess = dataAccess;
+            _playerNetServices = playerNetServices;
             _emailDispatcher = emailDispatcher;
-            _extensionProviders = extensionProviders;
+            _emailQueueService = emailQueueService;
+        }
+        #endregion
+
+        #region Actions
+
+        #region Profiles
+        [Route("profile")]
+        [HttpPut]
+        public async Task<IActionResult> SetProfile([FromBody] ProfileUpdateDTO profileUpdateInfo)
+        {
+            var dataInfo = await _dataAccess.ProfileRequestChange(profileUpdateInfo.PlayerId, profileUpdateInfo.OperatorId,
+                new PlayerInfo
+                {
+                    FirstName = profileUpdateInfo.PlayerInfo.FirstName,
+                    LastName = profileUpdateInfo.PlayerInfo.LastName,
+                    MobileNo = profileUpdateInfo.PlayerInfo.MobileNo,
+                    MobilePrefix = profileUpdateInfo.PlayerInfo.MobilePrefix
+                });
+            return Ok(dataInfo);
         }
 
         [Route("profile")]
-        [HttpPut]
-        public async Task<IActionResult> Profile([FromBody] ProfileUpdateDTO profileUpdateInfo)
+        [HttpGet]
+        public async Task<IActionResult> GetProfile([FromBody] ProfileGetDTO profileGetInfo)
         {
-            var resultInfo = new ResultsInfo { Success = false, DataInfo = null };
+            return Ok(await (Task.Run(()=>_dataAccess.ProfileRequestGet(profileGetInfo.PlayerId, profileGetInfo.OperatorId))));
+        }
+        #endregion
 
-            try
-            {
-                if (string.IsNullOrWhiteSpace(profileUpdateInfo.PlayerId))
-                {
-                    resultInfo.ErrorDescription = "player is empty or null";
-                    return new JsonResult(resultInfo);
-                }
-                var dataInfo = await _dataAccess.ProfileRequestChange(profileUpdateInfo.PlayerId, new PlayerInfo
-                {
-                    FirstName = profileUpdateInfo.playerInfo.FirstName,
-                    LastName = profileUpdateInfo.playerInfo.LastName,
-                    MobileNo = profileUpdateInfo.playerInfo.MobileNo,
-                    MobilePrefix = profileUpdateInfo.playerInfo.MobilePrefix
-                });
-                resultInfo.DataInfo = dataInfo;
-                resultInfo.Success = dataInfo;
-            }
-            catch (Exception ex)
-            {
-                resultInfo.ErrorDescription = $"{ex.Message}={ex.InnerException.Message}";
-            }
-            return new JsonResult(resultInfo);
-
+        #region DeletePlayer
+        [Route("delete")]
+        [HttpPost]
+        public async Task<IActionResult> DeletePlayer([FromBody] PlayerDeleteDTO playerInfo)
+        {
+            string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
+            AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, userName);
+            var result = await _userManager.DeleteAsync(ppUser);
+            var success = await _dataAccess.DeletePlayerByUserId(ppUser.Id, playerInfo.OperatorId);
+            return Ok();
         }
 
+        #region Register
         [Route("register")]
         [HttpPost]
-        // Description: Registers the new player, will generate a email token based link
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerInfo)
         {
-            var resultInfo = new ResultsInfo { Success = false, DataInfo = null };
+            AppUser user = null;
+            string urlReferer = Request.Headers["Origin"].ToString();
+            string userName = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
 
-            try
+            if (!registerInfo.BoUser)
             {
-                string clientOperatorId = registerInfo.OperatorId;
-                if (string.IsNullOrWhiteSpace(clientOperatorId))
-                {
-                    resultInfo.ErrorDescription = "operatorid is null";
-                    return new JsonResult(resultInfo);
-                }
-
-                if (string.IsNullOrWhiteSpace(registerInfo.Email) 
-                    || string.IsNullOrWhiteSpace(registerInfo.Password)
-                      || string.IsNullOrWhiteSpace(registerInfo.UserName))
-                {
-                    resultInfo.ErrorDescription = "email or password or username is null";
-                    return new JsonResult(resultInfo);
-                }
-
                 if (registerInfo.Password != registerInfo.ConfirmPassword)
-                {
-                    resultInfo.ErrorDescription = "passwords don't match!";
-                    return new JsonResult(resultInfo);
-                }
-
-                string clientUsername = registerInfo.UserName + '_' + clientOperatorId;
-
-                AppUser player = _dataAccess.GetAppUser(registerInfo.Email, clientUsername, clientOperatorId);
-                if (player == null)
-                {
-                    var user = new AppUser
-                    {
-                        UserName = clientUsername,
-                        OperatorId = clientOperatorId,
-                        Email = registerInfo.Email,
-                        DisplayUsername = registerInfo.UserName,
-                        RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
-                    };
-
-                    var result = await _userManager.CreateAsync(user, registerInfo.Password);
-                    if (result.Succeeded)
-                    {
-                        string urlReferer = Request.Headers["Origin"].ToString();
-                        string theRole = string.IsNullOrEmpty(registerInfo.RoleType) ? "player" : registerInfo.RoleType.ToLower();
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
-                        if (theRole == "player")
-                        {
-                            user.PlayerId = await _dataAccess.CreatePlayerById(user.Id, user.OperatorId, registerInfo.playerInfo);
-                            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", user.OperatorId));
-                            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", user.PlayerId));
-                            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
-                        }
-
-                        await CreateUserRoles(user, theRole);
-
-                        var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                        var callbackUrl = Url.Action(
-                            "verifyemail", "account",
-                            values: new { userId = user.Id, code = emailConfirmationToken, operatorId = user.OperatorId, urlreferer = urlReferer, urlhosted = registerInfo.HostedUrl},
-                            protocol: Request.Scheme);
-                        resultInfo.DataInfo = callbackUrl;
-                        bool registerationCompleted = await CreatePlayerOnProductDB(
-                                              new PlayerRegisterInfo
-                                              {
-                                                  Email = user.Email,
-                                                  Username = user.DisplayUsername,
-                                                  PlayerAccountId = user.PlayerId,
-                                                  OperatorAccountId = Convert.ToInt32(registerInfo.OperatorId)
-                                              },
-                                              registerInfo.HostedUrl
-                                            );
-                        resultInfo.Success = registerationCompleted;
-                        if (registerationCompleted)
-                        {
-                            resultInfo.Message = $"{GlobalConstants.MsgRegisterSuccess} - {registerInfo.Email}";
-                            await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email);
-                            await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email);
-                        }
-                        else
-                            resultInfo.Message = $"{GlobalConstants.MsgRegisterFailed}";
-                    }
-                    else
-                    {
-                        var errorList = result.Errors.ToArray();
-                        foreach (var error in errorList)
-                        {
-                            resultInfo.ErrorDescription = resultInfo.ErrorDescription + $" {error.Description}";
-                        }
-                    }
-
-                }
-                else
-                {
-                    resultInfo.ErrorDescription = "The email or username you are trying to register already exists.";
-                }
+                    return NotFound(GlobalConstants.ErrPasswordsMismatch);
             }
-            catch (Exception ex)
+
+            if (_dataAccess.UserOperatorExists(registerInfo.Email, userName, registerInfo.OperatorId))
+                return NotFound(GlobalConstants.ErrExistingAccount);
+
+
+            AppUser ppUser = _dataAccess.GetAppUser(registerInfo.Email, userName);
+            string userId = string.Empty;
+
+            if (ppUser != null)
+                userId = ppUser.Id;
+            else
             {
-                resultInfo.ErrorDescription = $"{ex.Message}={ex.InnerException.Message}";
+                user = new AppUser { UserName = userName, Email = registerInfo.Email,
+                                        DisplayUsername = registerInfo.UserName,
+                                        RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
+                                   };
+                var result = await _userManager.CreateAsync(user, registerInfo.Password);
+                if (!result.Succeeded)
+                    return NotFound(GlobalConstants.ErrCreateAccount);
+
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
+
+                if (registerInfo.Roles != null)
+                {
+                    foreach (var roleItem in registerInfo.Roles)
+                        await CreateUserRoles(user, roleItem);
+                }
+                userId = user.Id;
             }
-            return new JsonResult(resultInfo);
 
+            int newPlayerId = await _dataAccess.CreatePlayerById(userId, registerInfo.OperatorId, registerInfo.PlayerInfo);
+            if (registerInfo.BoUser)
+            {
+                return Ok(newPlayerId);
+            }
+            if (user != null)
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", newPlayerId.ToString()));
+
+            await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
+
+            var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                                            var callbackUrl = Url.Action(
+                                            "verifyemail", "account",
+                                            values: new { userId = user.Id, code = emailConfirmationToken,
+                                                          playerId = newPlayerId, operatorId = registerInfo.OperatorId,
+                                                          urlreferer = urlReferer, urlhosted = registerInfo.HostedUrl},
+                                                          protocol: Request.Scheme);
+
+            bool registerationCompleted = await CreatePlayerOnProductDB(
+                                    new PlayerRegisterInfo
+                                    {
+                                        Email = user.Email,
+                                        Username = user.DisplayUsername,
+                                        PlayerAccountId = $"{registerInfo.OperatorId}-{newPlayerId:D8}",
+                                        PlayerId = newPlayerId,
+                                        OperatorId = registerInfo.OperatorId,
+                                        CreatedBy = user.DisplayUsername
+                                    },
+                                    registerInfo.HostedUrl
+                                );
+            if (!registerationCompleted)
+                return NotFound(GlobalConstants.ErrCreateAccount);
+
+            await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, registerInfo.OperatorId);
+            await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, registerInfo.OperatorId);
+
+            return Ok();
         }
+        #endregion
 
+        #region  Verify Email 
         [Route("verifyemail")]
         [HttpGet]
-        public async Task<IActionResult> VerifyEmail(string userId, string code, string operatorId, string urlreferer, string urlhosted)
+        public async Task<IActionResult> VerifyEmail(string userId, string code, int playerId, int operatorId, string urlreferer, string urlhosted)
         {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound(GlobalConstants.ErrUsernameAccountNotRegistered);
 
-            var resultInfo = new ResultsInfo { Success = false, DataInfo = null };
-
-            try
-            {
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user != null)
-                {
-                    var emailConfirmationResult = await _userManager.ConfirmEmailAsync(user, code);
-                    if (!emailConfirmationResult.Succeeded)
-                    {
-                        var errorList = emailConfirmationResult.Errors.ToArray();
-                        foreach (var error in errorList)
-                        {
-                            resultInfo.ErrorDescription = resultInfo.ErrorDescription + $" {error.Description}";
-                        }
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(user.PlayerId))
-                        {
-                            await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
-                            await SetPlayerStatusOnProductDB(user.PlayerId, "Active", urlhosted);
-                        }
-                        return Redirect(urlreferer);
-                    }
-                }
-                else
-                {
-                    resultInfo.ErrorDescription = "The player information for this verification code does not exists.";
-                }
-
-            }
-            catch (Exception ex)
-            {
-                resultInfo.ErrorDescription = $"{ex.Message}={ex.InnerException.Message}";
-            }
-            return new JsonResult(resultInfo.ErrorDescription);
+            var emailConfirmationResult = await _userManager.ConfirmEmailAsync(user, code);
+            if (!emailConfirmationResult.Succeeded)
+                return NotFound(GlobalConstants.ErrUserAccountNotExisting);
+            if (operatorId > 0)
+                await SetRegistrationStatus(userId, RegistrationStatusNames.Verified);
+            if (string.IsNullOrEmpty(urlreferer))
+                return Content($"Username: {user.DisplayUsername}, Email: {user.Email} activated. Thank you.");
+            return Redirect(urlreferer);
         }
+        #endregion
 
-        #region PrivateMethods
+        #region Create User Roles
         private async Task CreateUserRoles(AppUser user, string roleDesired)
         {
             IdentityResult roleResult;
@@ -241,60 +211,81 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             }
             await _userManager.AddToRoleAsync(user, roleDesired);
         }
+        #endregion
 
+        #region Token Generator
+        private AuthTokenInfo GenerateToken(string hostedUrl)
+        {
+            var ppWebScope = _authConfig.AuthClientInfoList.Where(s => s.ClientId.Equals(GlobalConstants.ApiClientId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            return (new AuthTokenInfo
+            {
+                ApiUrl = hostedUrl,
+                ClientId = ppWebScope.ClientId,
+                LifeTime = ppWebScope.LifeTime,
+                ApiName = ppWebScope.ApiScope,
+                ApiScope = ppWebScope.ApiScope
+            });
+        }
+        #endregion
+
+        #region Create Player 
         private async Task<bool> CreatePlayerOnProductDB(PlayerRegisterInfo playerRegister, string hostedUrl)
         {
-            AuthTokenInfo authToken = new AuthTokenInfo
-            {
-                ApiUrl = hostedUrl,
-                ClientId = GlobalConstants.IdServerClientToken,
-                LifeTime = GlobalConstants.IdServerRegisterTokenLife
-            };
-            return await _extensionProviders.PlayerRegister(authToken, playerRegister);
+            return await _playerNetServices.PlayerRegister(GenerateToken(hostedUrl), playerRegister);
         }
+        #endregion
 
+        #region Set Status
+        private async Task<bool> SetPlayerStatusOnProductDB(string username, int playerId, int operatorId, string newStatus, string hostedUrl)
+        {
+            return await _playerNetServices.PlayerSetStatus(GenerateToken(hostedUrl),
+                                                                new PlayerStatusInfo
+                                                                {
+                                                                    PlayerId = playerId,
+                                                                    OperatorId = operatorId,
+                                                                    Status = newStatus,
+                                                                    ModifiedBy = username
+                                                                });
+        }
+        #endregion
+
+        #region Set Registration 
         private async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registrationStatus)
         {
-           return await _dataAccess.SetRegistrationStatus(userId, registrationStatus);
+            return await _dataAccess.SetRegistrationStatus(userId, registrationStatus);
         }
+        #endregion
 
-        private async Task<bool> SetPlayerStatusOnProductDB(string playerId, string newStatus, string hostedUrl)
+        #region Welcome Email
+        private async Task SendWelcomeEmail(string referer, string name, string email, int operatorId)
         {
-            AuthTokenInfo authToken = new AuthTokenInfo
-            {
-                ApiUrl = hostedUrl,
-                ClientId = GlobalConstants.IdServerClientToken,
-                LifeTime = GlobalConstants.IdServerRegisterTokenLife
-            };
-            PlayerStatusInfo playerStatus = new PlayerStatusInfo
-            {
-                PlayerId = playerId,
-                Status = newStatus
-            };
-            return await _extensionProviders.PlayerSetStatus(authToken, playerStatus);
-        }
+            var emailMessage = _emailDispatcher.CreateWelcomeEmail(referer, name, email, operatorId);
+            await _emailQueueService.Send(emailMessage);
 
-        private async Task SendWelcomeEmail(string referer, string name, string email)
-        {
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
             if (environmentName != "release" 
                  || environmentName != "production")
             {
-                await _emailDispatcher.SendWelcomeEmail(referer, name, email);
+                await _emailDispatcher.EmailSender(emailMessage);
             }
         }
+        #endregion
 
-        private async Task SendActivationEmail(string content, string name, string email)
+        #region Activation Email
+        private async Task SendActivationEmail(string content, string name, string email, int operatorId)
         {
+            var emailMessage = _emailDispatcher.CreateEmailActivationLink(content, name, email, operatorId);
+            await _emailQueueService.Send(emailMessage);
+
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
             if (environmentName != "release"
                  || environmentName != "production")
             {
-                await _emailDispatcher.SendActivationLink(content, name, email);
+                await _emailDispatcher.EmailSender(emailMessage);
             }
         }
-
         #endregion
-
+        #endregion
+        #endregion
     }
 }

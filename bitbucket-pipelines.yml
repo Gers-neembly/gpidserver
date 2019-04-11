@@ -32,7 +32,8 @@ pipelines:
             - apt-get update && apt-get -qq install ncftp
             - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR_DEVTEST $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
             - cd $DB_PROJECT_DIR
-            - dotnet ef database update
+            - dotnet ef database update --context AppDBContext
+            - dotnet ef database update --context UtilsDBContext
             - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR_DEVTEST builddate.txt
     deploy-to-qa:
@@ -47,7 +48,8 @@ pipelines:
             - apt-get update && apt-get -qq install ncftp
             - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_ROOTDIR_STAGING $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
             - cd $DB_PROJECT_DIR
-            - dotnet ef database update
+            - dotnet ef database update --context AppDBContext
+            - dotnet ef database update --context UtilsDBContext
             - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_DEPLOYDIR_STAGING builddate.txt
     deploy-to-prod:
@@ -62,7 +64,8 @@ pipelines:
             - apt-get update && apt-get -qq install ncftp
             - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR_PROD $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
             - cd $DB_PROJECT_DIR
-            - dotnet ef database update
+            - dotnet ef database update --context AppDBContext
+            - dotnet ef database update --context UtilsDBContext
             - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR_PROD builddate.txt
   default:
@@ -77,9 +80,9 @@ pipelines:
           - apt-get update && apt-get install -y openjdk-8-jre
           - dotnet tool install --global dotnet-sonarscanner --version 4.4.2
           - chmod +x /root/.dotnet/tools/.store/dotnet-sonarscanner/4.4.2/dotnet-sonarscanner/4.4.2/tools/netcoreapp2.1/any/sonar-scanner-3.2.0.1227/bin/sonar-scanner
-          - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
-          - dotnet build
-          - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY    
+          #- dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
+          #- dotnet build
+          #- dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY    
           - dotnet restore
           - dotnet build $PROJECT_NAME --configuration Debug
   branches:
@@ -109,7 +112,8 @@ pipelines:
             - apt-get update && apt-get -qq install ncftp
             - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_ROOTDIR_STAGING $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
             - cd $DB_PROJECT_DIR
-            - dotnet ef database update
+            - dotnet ef database update --context AppDBContext
+            - dotnet ef database update --context UtilsDBContext
             - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_DEPLOYDIR_STAGING builddate.txt
    production:
@@ -128,6 +132,7 @@ pipelines:
             - apt-get update && apt-get -qq install ncftp
             - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR_PROD $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
             - cd $DB_PROJECT_DIR
-            - dotnet ef database update
+            - dotnet ef database update --context AppDBContext
+            - dotnet ef database update --context UtilsDBContext
             - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR_PROD builddate.txt

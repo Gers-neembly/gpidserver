@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Neembly.GPIDServer.Persistence.Migrations
 {
-    public partial class initial : Migration
+    public partial class initial_gpidentity : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -41,8 +41,8 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     LockoutEnd = table.Column<DateTimeOffset>(nullable: true),
                     LockoutEnabled = table.Column<bool>(nullable: false),
                     AccessFailedCount = table.Column<int>(nullable: false),
-                    OperatorId = table.Column<string>(nullable: true),
-                    PlayerId = table.Column<string>(nullable: true)
+                    DisplayUsername = table.Column<string>(nullable: true),
+                    RegistrationStatus = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -55,7 +55,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    OperatorId = table.Column<string>(nullable: true),
+                    OperatorId = table.Column<int>(nullable: false),
                     TagId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
@@ -67,13 +67,18 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                 name: "Players",
                 columns: table => new
                 {
-                    PlayerId = table.Column<string>(nullable: false),
+                    Id = table.Column<Guid>(nullable: false),
+                    NetUserId = table.Column<string>(nullable: true),
+                    PlayerId = table.Column<int>(nullable: false),
+                    OperatorId = table.Column<int>(nullable: false),
                     FirstName = table.Column<string>(nullable: true),
-                    LastName = table.Column<string>(nullable: true)
+                    LastName = table.Column<string>(nullable: true),
+                    MobilePrefix = table.Column<string>(nullable: true),
+                    MobileNo = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Players", x => x.PlayerId);
+                    table.PrimaryKey("PK_Players", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
