@@ -14,5 +14,6 @@ namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
         public List<string> Roles { get; set; }
         public PlayerInfo PlayerInfo { get; set; }
         public bool BoUser { get; set; }
+        public int PlayerId { get; set; }
     }
 }

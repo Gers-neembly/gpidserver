@@ -9,7 +9,6 @@ namespace Neembly.GPIDServer.Persistence
         public AppDBContext(DbContextOptions<AppDBContext> options) : base(options)
         {
         }
-        public DbSet<Player> Players { get; set; }
         public DbSet<OperatorData> OperatorData { get; set; }
 
     }

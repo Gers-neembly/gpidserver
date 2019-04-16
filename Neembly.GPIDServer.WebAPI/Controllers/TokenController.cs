@@ -46,9 +46,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region Actions
         [Route("GetToken")]
         [HttpGet]
-        public async Task<IActionResult> CreateToken(string hostedUrl)
+        public async Task<IActionResult> CreateToken()
         {
-            var success = await _tokenProviderService.CreateToken(GenerateToken(hostedUrl));
+            var success = await _tokenProviderService.CreateToken();
             return Ok();
         }
         #endregion

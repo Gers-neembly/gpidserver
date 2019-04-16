@@ -5,6 +5,6 @@ namespace Neembly.GPIDServer.SharedServices.Interfaces
 {
     public interface ITokenProviderService
     {
-        Task<string> CreateToken(AuthTokenInfo authTokenInfo);
+        Task<string> CreateToken();
     }
 }
