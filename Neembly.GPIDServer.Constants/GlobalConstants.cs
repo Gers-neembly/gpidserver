@@ -24,6 +24,13 @@
         public const string AuthTypeClientCredentials = "clientCredentials";
         #endregion
 
+        #region Token Provider
+        public const string TokenScope = "Neembly.GP.Web.PlayerPortalApi";
+        public const string TokenClientId = "Neembly.PlayerPortalApi.Services";
+        public const string TokenTypePassword = "passwordGrant";
+        public const string TokenTypeClientCredentials = "clientCredentials";
+        #endregion
+
         #region Operator Tag Ids
         public const int PlayerIdTagStarts = 10000;
         #endregion
