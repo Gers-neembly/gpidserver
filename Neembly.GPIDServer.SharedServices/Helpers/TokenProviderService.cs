@@ -25,9 +25,8 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
         #region Create Token
         public async Task<string> CreateToken()
         {
-            return null;
             //should read from configuration -- config should be loaded from the startup -- direct injection
-            //return await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiName }, new[] { authTokenInfo.ApiScope });
+            return await _identityServerTools.IssueClientJwtAsync(_authTokenInfo.ClientId, _authTokenInfo.LifeTime, new[] { _authTokenInfo.ApiName }, new[] { _authTokenInfo.ApiScope });
         }
         #endregion
 

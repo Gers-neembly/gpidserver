@@ -57,8 +57,8 @@ namespace Neembly.GPIDServer.WebAPI
             Configuration.Bind("AuthClientConfiguration", authClientConfig);
             services.AddSingleton(authClientConfig);
 
-            var authTokenConfig = new AuthClientConfiguration();
-            Configuration.Bind("AuthTokenConfig", authTokenConfig);
+            var authTokenConfig = new AuthTokenInfo();
+            Configuration.Bind("AuthTokenInfo", authTokenConfig);
             services.AddSingleton(authTokenConfig);
 
 
