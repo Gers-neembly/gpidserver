@@ -21,6 +21,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.4" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.6" />
     <PackageReference Include="NCoreUtils.AspNetCore.Authentication.OpenId" Version="1.1.1" />
+    <PackageReference Include="NLog" Version="4.5.11" />
+    <PackageReference Include="NLog.MailKit" Version="3.0.1" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="4.8.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.1.2" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.1" />
   </ItemGroup>
