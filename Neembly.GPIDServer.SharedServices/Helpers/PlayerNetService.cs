@@ -47,7 +47,8 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
         public HttpClient HttpClientSender(string apiUrl, string authUrl, string token, HttpTransactType httpType)
         {
             HttpClient httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri($"https://{authUrl}");
+//            httpClient.BaseAddress = new Uri($"https://{authUrl}");
+            httpClient.BaseAddress = new Uri(authUrl);
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
