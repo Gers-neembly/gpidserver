@@ -12,6 +12,7 @@ using Neembly.GPIDServer.Persistence;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Helpers;
 using Neembly.GPIDServer.Persistence.Interfaces;
+using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Helpers;
 using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Filters;
@@ -56,6 +57,11 @@ namespace Neembly.GPIDServer.WebAPI
             Configuration.Bind("AuthClientConfiguration", authClientConfig);
             services.AddSingleton(authClientConfig);
 
+            var authTokenConfig = new AuthClientConfiguration();
+            Configuration.Bind("AuthTokenConfig", authTokenConfig);
+            services.AddSingleton(authTokenConfig);
+
+
             services.AddIdentityServer()
                     .AddDeveloperSigningCredential()
                     .AddInMemoryPersistedGrants()
@@ -73,6 +79,7 @@ namespace Neembly.GPIDServer.WebAPI
             services.AddScoped<IEmailDispatcher, EmailDispatcher>();
             services.AddScoped<IEmailQueueService, DbEmailQueueService>();
             services.AddScoped<IPlayerNetService, PlayerNetService>();
+            services.AddScoped<ITokenProviderService, TokenProviderService>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
             services.AddTransient<IResourceOwnerPasswordValidator, CustomResourceOwnerPasswordValidator>();
 

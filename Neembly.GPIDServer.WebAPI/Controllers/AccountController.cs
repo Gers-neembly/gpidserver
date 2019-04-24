@@ -57,30 +57,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
         #region Actions
 
-        #region Profiles
-        [Route("profile")]
-        [HttpPut]
-        public async Task<IActionResult> SetProfile([FromBody] ProfileUpdateDTO profileUpdateInfo)
-        {
-            var dataInfo = await _dataAccess.ProfileRequestChange(profileUpdateInfo.PlayerId, profileUpdateInfo.OperatorId,
-                new PlayerInfo
-                {
-                    FirstName = profileUpdateInfo.PlayerInfo.FirstName,
-                    LastName = profileUpdateInfo.PlayerInfo.LastName,
-                    MobileNo = profileUpdateInfo.PlayerInfo.MobileNo,
-                    MobilePrefix = profileUpdateInfo.PlayerInfo.MobilePrefix
-                });
-            return Ok(dataInfo);
-        }
-
-        [Route("profile")]
-        [HttpGet]
-        public async Task<IActionResult> GetProfile([FromBody] ProfileGetDTO profileGetInfo)
-        {
-            return Ok(await (Task.Run(()=>_dataAccess.ProfileRequestGet(profileGetInfo.PlayerId, profileGetInfo.OperatorId))));
-        }
-        #endregion
-
         #region DeletePlayer
         [Route("delete")]
         [HttpPost]
@@ -89,7 +65,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
             AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, userName);
             var result = await _userManager.DeleteAsync(ppUser);
-            var success = await _dataAccess.DeletePlayerByUserId(ppUser.Id, playerInfo.OperatorId);
             return Ok();
         }
 
@@ -111,16 +86,22 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (_dataAccess.UserOperatorExists(registerInfo.Email, userName, registerInfo.OperatorId))
                 return NotFound(GlobalConstants.ErrExistingAccount);
 
-
-            AppUser ppUser = _dataAccess.GetAppUser(registerInfo.Email, userName);
+            user = _dataAccess.GetAppUser(registerInfo.Email, userName);
             string userId = string.Empty;
 
-            if (ppUser != null)
-                userId = ppUser.Id;
+            int newPlayerId = await _dataAccess.GeneratePlayerId(userName,  registerInfo.Email, registerInfo.OperatorId);
+            registerInfo.PlayerId = newPlayerId;
+
+            if (user != null)
+                {
+                    userId = user.Id;
+                }
             else
             {
                 user = new AppUser { UserName = userName, Email = registerInfo.Email,
                                         DisplayUsername = registerInfo.UserName,
+                                        PlayerId = registerInfo.PlayerId,
+                                        OperatorId = registerInfo.OperatorId,
                                         RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
                                    };
                 var result = await _userManager.CreateAsync(user, registerInfo.Password);
@@ -140,7 +121,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 userId = user.Id;
             }
 
-            int newPlayerId = await _dataAccess.CreatePlayerById(userId, registerInfo.OperatorId, registerInfo.PlayerInfo);
             if (registerInfo.BoUser)
             {
                 return Ok(newPlayerId);
@@ -158,25 +138,10 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                                                           urlreferer = urlReferer, urlhosted = registerInfo.HostedUrl},
                                                           protocol: Request.Scheme);
 
-            bool registerationCompleted = await CreatePlayerOnProductDB(
-                                    new PlayerRegisterInfo
-                                    {
-                                        Email = user.Email,
-                                        Username = user.DisplayUsername,
-                                        PlayerAccountId = $"{registerInfo.OperatorId}-{newPlayerId:D8}",
-                                        PlayerId = newPlayerId,
-                                        OperatorId = registerInfo.OperatorId,
-                                        CreatedBy = user.DisplayUsername
-                                    },
-                                    registerInfo.HostedUrl
-                                );
-            if (!registerationCompleted)
-                return NotFound(GlobalConstants.ErrCreateAccount);
-
             await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, registerInfo.OperatorId);
             await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, registerInfo.OperatorId);
 
-            return Ok();
+            return Ok(newPlayerId);
         }
         #endregion
 
@@ -258,7 +223,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
         #region Welcome Email
         private async Task SendWelcomeEmail(string referer, string name, string email, int operatorId)
-        {
+        {   
             var emailMessage = _emailDispatcher.CreateWelcomeEmail(referer, name, email, operatorId);
             await _emailQueueService.Send(emailMessage);
 
