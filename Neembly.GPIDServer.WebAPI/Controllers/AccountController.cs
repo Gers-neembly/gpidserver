@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +12,9 @@ using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Neembly.GPIDServer.WebAPI.Filters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -62,6 +65,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region Actions
 
         #region DeletePlayer
+        [NeemblyAuthorize]
         [Route("delete")]
         [HttpPost]
         public async Task<IActionResult> DeletePlayer([FromBody] PlayerDeleteDTO playerInfo)
@@ -79,16 +83,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         }
 
         #region Register
+        [NeemblyAuthorize]
         [Route("register")]
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerInfo)
         {
-            string url = ($"{HttpContext.Request.Scheme.ToString()}://{HttpContext.Request.Host.ToString()}") ;
-            string token = Request.Headers["Authorization"].ToString().Substring(7);
-            if (!await _tokenProviderServices.ValidateToken(token, url))
-            {
-                    return Unauthorized();
-            }
             AppUser user = null;
             string urlReferer = Request.Headers["Origin"].ToString();
             string userName = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
@@ -96,11 +95,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (!registerInfo.BoUser)
             {
                 if (registerInfo.Password != registerInfo.ConfirmPassword)
-                    return NotFound(GlobalConstants.ErrPasswordsMismatch);
+                    return BadRequest(GlobalConstants.ErrPasswordsMismatch);
             }
 
             if (_dataAccess.UserOperatorExists(registerInfo.Email, userName, registerInfo.OperatorId))
-                return NotFound(GlobalConstants.ErrExistingAccount);
+                return BadRequest(GlobalConstants.ErrExistingAccount);
 
             user = _dataAccess.GetAppUser(registerInfo.Email, userName);
             string userId = string.Empty;
