@@ -29,9 +29,9 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             else
             {
                 long tagId = GlobalConstants.PlayerIdTagStarts;
-                var operatorRecord = _appDBContext.OperatorData.Where(r => r.OperatorId == operatorId).FirstOrDefault();
+                var operatorRecord = _appDBContext.OperatorData.FirstOrDefault();
                 if (operatorRecord == null)
-                    _appDBContext.OperatorData.Add(new OperatorData { OperatorId = operatorId, TagId = 1 });
+                    _appDBContext.OperatorData.Add(new OperatorData { OperatorId = operatorId, TagId = tagId });
                 else
                 {
                     tagId = operatorRecord.TagId + 1;

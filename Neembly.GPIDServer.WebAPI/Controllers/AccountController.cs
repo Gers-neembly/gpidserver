@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,9 @@ using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Neembly.GPIDServer.WebAPI.Filters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -27,6 +31,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private readonly IPlayerNetService _playerNetServices;
         private readonly IEmailDispatcher _emailDispatcher;
         private readonly IEmailQueueService _emailQueueService;
+        private readonly ITokenProviderService _tokenProviderServices;
         private readonly AuthClientConfiguration _authConfig;
         #endregion
 
@@ -39,6 +44,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             IConfiguration configuration,
             IDataAccess dataAccess,
             IPlayerNetService playerNetServices,
+            ITokenProviderService tokenProviderServices,
             IEmailDispatcher emailDispatcher,
             IEmailQueueService emailQueueService
             )
@@ -50,6 +56,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _authConfig = authConfig;
             _dataAccess = dataAccess;
             _playerNetServices = playerNetServices;
+            _tokenProviderServices = tokenProviderServices;
             _emailDispatcher = emailDispatcher;
             _emailQueueService = emailQueueService;
         }
@@ -58,10 +65,17 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region Actions
 
         #region DeletePlayer
+        [NeemblyAuthorize]
         [Route("delete")]
         [HttpPost]
         public async Task<IActionResult> DeletePlayer([FromBody] PlayerDeleteDTO playerInfo)
         {
+            string url = ($"{HttpContext.Request.Scheme.ToString()}://{HttpContext.Request.Host.ToString()}");
+            string token = Request.Headers["Authorization"].ToString().Substring(7);
+            if (!await _tokenProviderServices.ValidateToken(token, url))
+            {
+                return Unauthorized();
+            }
             string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
             AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, userName);
             var result = await _userManager.DeleteAsync(ppUser);
@@ -69,6 +83,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         }
 
         #region Register
+        [NeemblyAuthorize]
         [Route("register")]
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerInfo)
@@ -80,11 +95,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (!registerInfo.BoUser)
             {
                 if (registerInfo.Password != registerInfo.ConfirmPassword)
-                    return NotFound(GlobalConstants.ErrPasswordsMismatch);
+                    return BadRequest(GlobalConstants.ErrPasswordsMismatch);
             }
 
             if (_dataAccess.UserOperatorExists(registerInfo.Email, userName, registerInfo.OperatorId))
-                return NotFound(GlobalConstants.ErrExistingAccount);
+                return BadRequest(GlobalConstants.ErrExistingAccount);
 
             user = _dataAccess.GetAppUser(registerInfo.Email, userName);
             string userId = string.Empty;
