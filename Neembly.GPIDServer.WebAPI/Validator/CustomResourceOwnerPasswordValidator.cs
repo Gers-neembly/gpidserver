@@ -30,7 +30,11 @@ namespace Neembly.GPIDServer.WebAPI.Validator
             string operatorId = context.Request.Raw["operatorId"];
             string email = context.Request.Raw["email"];
             string userName = $"{context.UserName}_{operatorId}";
-            var user = _context.Users.Where(p => p.UserName == userName
+            AppUser user = null;
+            if (string.IsNullOrEmpty(email))
+                user = _context.Users.Where(p => p.UserName == userName).FirstOrDefault();
+            else
+                user = _context.Users.Where(p => p.UserName == userName
                                             && p.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
             if (user != null)
             {
