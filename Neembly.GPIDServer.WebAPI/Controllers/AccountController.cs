@@ -81,6 +81,31 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var result = await _userManager.DeleteAsync(ppUser);
             return Ok();
         }
+        #endregion
+
+        #region UpdatePlayer
+        [NeemblyAuthorize]
+        [Route("edit")]
+        [HttpPost]
+        public async Task<IActionResult> UpdatePlayer([FromBody] PlayerUpdateDTO playerInfo)
+        {
+            string url = ($"{HttpContext.Request.Scheme.ToString()}://{HttpContext.Request.Host.ToString()}");
+            string token = Request.Headers["Authorization"].ToString().Substring(7);
+            if (!await _tokenProviderServices.ValidateToken(token, url))
+            {
+                return Unauthorized();
+            }
+            //string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
+            if (_dataAccess.EmailExists(playerInfo.Email, playerInfo.OperatorId))
+            {
+                return Ok();
+            }
+            //insert update function here
+            //AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, userName);
+            //var result = await _userManager.DeleteAsync(ppUser);
+            return Ok();
+        }
+        #endregion
 
         #region Register
         [NeemblyAuthorize]
@@ -264,7 +289,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 await _emailDispatcher.EmailSender(emailMessage);
             }
         }
-        #endregion
         #endregion
         #endregion
     }

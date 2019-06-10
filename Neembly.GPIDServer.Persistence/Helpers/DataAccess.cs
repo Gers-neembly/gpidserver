@@ -64,6 +64,12 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             return (appUser == null) ? false : CheckOperatorAssignment(appUser.Id, operatorId) != null;
         }
 
+        public bool EmailExists(string email, int operatorId)
+        {
+            var appUser = _appDBContext.Users.Where(r => r.OperatorId == operatorId
+                                                          && r.Email.ToLower() == email.ToLower()).FirstOrDefault();
+            return (appUser == null) ? false : true;
+        }
 
         public async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus)
         {
