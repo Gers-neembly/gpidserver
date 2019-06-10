@@ -57,11 +57,10 @@ namespace Neembly.GPIDServer.Persistence.Helpers
         }
 
 
-        public bool UserOperatorExists(string email, string username, int operatorId)
+        public bool UserExists(string email, string username, int operatorId)
         {
-            var appUser = _appDBContext.Users.Where(r => r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)
-                                                          || r.Email.ToLower() == email.ToLower()).FirstOrDefault();
-            return (appUser == null) ? false : CheckOperatorAssignment(appUser.Id, operatorId) != null;
+            var appUser = _appDBContext.Users.Where(r => (r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase) || r.Email.ToLower() == email.ToLower()) && r.OperatorId == operatorId ).FirstOrDefault();
+            return (appUser == null) ? false : true;
         }
 
         public bool EmailExists(string email, int operatorId)

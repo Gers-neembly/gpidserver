@@ -123,7 +123,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                     return BadRequest(GlobalConstants.ErrPasswordsMismatch);
             }
 
-            if (_dataAccess.UserOperatorExists(registerInfo.Email, userName, registerInfo.OperatorId))
+            if (_dataAccess.UserExists(registerInfo.Email, userName, registerInfo.OperatorId))
                 return BadRequest(GlobalConstants.ErrExistingAccount);
 
             user = _dataAccess.GetAppUser(registerInfo.Email, userName);

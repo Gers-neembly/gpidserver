@@ -8,7 +8,7 @@ namespace Neembly.GPIDServer.Persistence.Interfaces
     public interface IDataAccess
     {
         AppUser GetAppUser(string email, string username);
-        bool UserOperatorExists(string email, string username, int operatorId);
+        bool UserExists(string email, string username, int operatorId);
         IEnumerable<int> GetPlayersOperators(string netUserId);
         Task<int> GeneratePlayerId(string userName, string email, int operatorId);
         Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus);
