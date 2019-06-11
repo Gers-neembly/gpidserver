@@ -51,6 +51,12 @@ namespace Neembly.GPIDServer.Persistence.Helpers
                                              && r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
         }
 
+        public AppUser GetAppUser(string username, int playerId)
+        {
+            return _appDBContext.Users.Where(r => r.PlayerId == playerId
+                                             && r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+        }
+
         public IEnumerable<int> GetPlayersOperators(string netUserId)
         {
             return _appDBContext.Users.Where(r => r.Id.Equals(netUserId, StringComparison.InvariantCultureIgnoreCase)).Select(r => r.OperatorId).ToList();
@@ -63,6 +69,20 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             return (appUser == null) ? false : true;
         }
 
+        public bool EmailExists(string email, int operatorId, int playerId)
+        {
+            var appUser = _appDBContext.Users.Where(r => r.OperatorId == operatorId
+                            && r.Email.ToLower() == email.ToLower()).FirstOrDefault();
+            bool isExists = true;
+            if (appUser == null)
+            {
+                isExists= false;
+            } else
+            { if (appUser.PlayerId == playerId) isExists=false;
+            }
+            return isExists;
+            //return (appUser != null || appUser.PlayerId!=playerId) ? false : true;
+        }
 
         public async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus)
         {

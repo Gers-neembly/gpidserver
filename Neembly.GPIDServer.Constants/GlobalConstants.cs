@@ -15,6 +15,8 @@
         public const string ErrExistingAccount = "REGD-002";
         public const string ErrUsernameAccountNotRegistered = "LOGD-001";
         public const string ErrUserAccountNotExisting = "LOGD-003";
+        public const string ErrPlayerExistingAccount = "PLAY-002";
+        public const string ErrPlayerAccountNotExisting = "PLAY-003";
         #endregion
 
         #region Auth
