@@ -95,14 +95,17 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             {
                 return Unauthorized();
             }
-            //string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
-            if (_dataAccess.EmailExists(playerInfo.Email, playerInfo.OperatorId))
+            string userName = $"{playerInfo.Username}_{playerInfo.OperatorId}";
+            if (_dataAccess.EmailExists(playerInfo.Email, playerInfo.OperatorId, playerInfo.PlayerId))
             {
-                return Ok();
+                return BadRequest(GlobalConstants.ErrPlayerExistingAccount);
             }
+
             //insert update function here
-            //AppUser ppUser = _dataAccess.GetAppUser(playerInfo.Email, userName);
-            //var result = await _userManager.DeleteAsync(ppUser);
+            AppUser ppUser = _dataAccess.GetAppUser(userName, playerInfo.PlayerId);
+            if (ppUser == null) return NotFound(GlobalConstants.ErrPlayerAccountNotExisting);
+            ppUser.Email = playerInfo.Email;
+            var result = await _userManager.UpdateAsync(ppUser);
             return Ok();
         }
         #endregion
