@@ -58,6 +58,23 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             return emailMessage;
         }
 
+
+        public EmailMessage CreatePasswordResetLink(string resetLink, string name, string toEmail, string newPassword, int operatorId)
+        {
+            string emailBody = $"<html><body><h2>Hi {name},</h2><h1>You have requested to reset your password</h1><a href = {resetLink}>Please Click to confirm reset of your password</a><p style='font-weight:900'>New Password: {newPassword}</p></body></html>";
+            EmailMessage emailMessage = new EmailMessage
+            {
+                Sender = "info@neembly.com",
+                Receipients = toEmail,
+                Subject = "Activate Your Game Account",
+                Message = emailBody,
+                OperatorId = operatorId,
+                IsHtml = true
+            };
+            emailMessage.Status = Enum.GetName(typeof(EmailSendingStatus), EmailSendingStatus.Pending);
+            return emailMessage;
+        }
+
         public async Task EmailSender(EmailMessage emailMessage)
         {
              EmailInfo emailInfo = new EmailInfo
