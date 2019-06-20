@@ -7,6 +7,7 @@ namespace Neembly.GPIDServer.SharedServices.Interfaces
     {
         EmailMessage CreateEmailActivationLink(string emailLink, string name, string toEmail, int operatorId);
         EmailMessage CreateWelcomeEmail(string referer, string name, string toEmail, int operatorId);
+        EmailMessage CreatePasswordResetLink(string resetLink, string name, string toEmail, string newPassword, int operatorId);
         Task EmailSender(EmailMessage emailMessage);
     }
 }
