@@ -61,14 +61,18 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region Reset
         [Route("reset")]
         [HttpGet]
-        public async Task<IActionResult> Reset(string userName, string email, string token, string newPassword, string operatorId)
+        public async Task<IActionResult> Reset(string userName, string email, string token, string newPassword, string operatorId, string homepage)
         {
             string username = $"{userName}_{operatorId}";
             AppUser ppUser = _dataAccess.GetAppUser(email, username);
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             var result = await _userManager.ResetPasswordAsync(ppUser, token, newPassword);
-            return Ok(result);
+            if (!result.Succeeded)
+                return BadRequest(result);
+            if (!string.IsNullOrEmpty(homepage))
+                return Redirect(homepage);
+            else return Ok(result);
         }
         #endregion
 
