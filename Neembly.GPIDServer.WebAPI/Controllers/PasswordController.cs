@@ -108,7 +108,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 Email = resetPasswordToken.Email,
                 OperatorId = resetPasswordToken.OperatorId,
                 Token = tokenLink,
-                NewPassword = resetPasswordToken.NewPassword
+                NewPassword = resetPasswordToken.NewPassword,
+                HomePage = resetPasswordToken.HomePage
             };
             var result = Url.Action("Reset",
                                 "Password", resetPasswordEntity,
