@@ -16,11 +16,15 @@ namespace Neembly.GPIDServer.WebAPI.Services
 {
     public class IdentityClaimsProfileService : IProfileService
     {
+
+        #region Member Variables 
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IUserClaimsPrincipalFactory<AppUser> _claimsFactory;
         private readonly UserManager<AppUser> _userManager;
         private readonly IDataAccess _dataAccess;
+        #endregion
 
+        #region Constructor
         public IdentityClaimsProfileService(UserManager<AppUser> userManager, 
             IUserClaimsPrincipalFactory<AppUser> claimsFactory, 
             IHostingEnvironment hostingEnvironment,
@@ -31,7 +35,9 @@ namespace Neembly.GPIDServer.WebAPI.Services
             _hostingEnvironment = hostingEnvironment;
             _dataAccess = dataAccess;
         }
+        #endregion
 
+        #region GetProfileData
         public async Task GetProfileDataAsync(ProfileDataRequestContext context)
         {
             var sub = context.Subject.GetSubjectId();
@@ -43,7 +49,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
             claims = claims.Where(claim => context.RequestedClaimTypes.Contains(claim.Type)).ToList();
 
             claims.Add(new Claim("email", user.Email));
-            claims.Add(new Claim("username", user.UserName));
+            claims.Add(new Claim("username", user.DisplayUsername));
             claims.Add(new Claim("registrationStatus", user.RegistrationStatus));
 
             int index = 1;
@@ -55,12 +61,16 @@ namespace Neembly.GPIDServer.WebAPI.Services
  
             context.IssuedClaims = claims;
         }
+        #endregion
 
+        #region Is Active
         public async Task IsActiveAsync(IsActiveContext context)
         {
             var sub = context.Subject.GetSubjectId();
             var user = await _userManager.FindByIdAsync(sub);
             context.IsActive = user != null;
         }
+        #endregion
+
     }
 }
