@@ -181,8 +181,10 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                                                           urlreferer = urlReferer, urlhosted = registerInfo.HostedUrl},
                                                           protocol: Request.Scheme);
 
-            await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, registerInfo.OperatorId);
-            await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, registerInfo.OperatorId);
+            //Remove due to NEEM-1053
+            //Email is no longer supported in ID Server
+            //await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, registerInfo.OperatorId);
+            //await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, registerInfo.OperatorId);
 
             return Ok(newPlayerId);
         }
