@@ -52,6 +52,22 @@ pipelines:
             - dotnet ef database update --context UtilsDBContext
             - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_DEPLOYDIR_STAGING builddate.txt
+    deploy-to-sb:
+      - step:
+          name: Deploy to QA-Staging
+          script:
+            - echo "Manual deploy to UAT-Sandbox environment"
+            - export ASPNETCORE_ENVIRONMENT="Sandbox"
+            - dotnet restore
+            - dotnet build $PROJECT_NAME --configuration Sandbox 
+            - dotnet publish $PROJECT_NAME --configuration Sandbox 
+            - apt-get update && apt-get -qq install ncftp
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR_SANDBOX $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - cd $DB_PROJECT_DIR
+            - dotnet ef database update --context AppDBContext
+            - dotnet ef database update --context UtilsDBContext
+            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR_SANDBOX builddate.txt
     deploy-to-prod:
       - step:
           name: Deploy to Production-Release
@@ -116,6 +132,24 @@ pipelines:
             - dotnet ef database update --context UtilsDBContext
             - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
             - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_STAGING $FTP_DEPLOYDIR_STAGING builddate.txt
+   sandbox:
+    # sandbox push-merge build 
+        - step:
+            name: Deploy to sandbox
+            deployment: sandbox
+            script: 
+            - echo "Auto Deployment CI/CD to UAT-sandbox environment"
+            - export ASPNETCORE_ENVIRONMENT="Sandbox"
+            - dotnet restore
+            - dotnet build $PROJECT_NAME --configuration Sandbox 
+            - dotnet publish $PROJECT_NAME --configuration Sandbox 
+            - apt-get update && apt-get -qq install ncftp
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR_SANDBOX $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - cd $DB_PROJECT_DIR
+            - dotnet ef database update --context AppDBContext
+            - dotnet ef database update --context UtilsDBContext
+            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR_SANDBOX builddate.txt
    production:
     # production push-merge build 
        - step:
