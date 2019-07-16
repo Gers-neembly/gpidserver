@@ -62,7 +62,7 @@ pipelines:
             - dotnet build $PROJECT_NAME --configuration Sandbox 
             - dotnet publish $PROJECT_NAME --configuration Sandbox 
             - apt-get update && apt-get -qq install ncftp
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR_SANDBOX $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR_SANDBOX $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
             - cd $DB_PROJECT_DIR
             - dotnet ef database update --context AppDBContext
             - dotnet ef database update --context UtilsDBContext
@@ -144,7 +144,7 @@ pipelines:
             - dotnet build $PROJECT_NAME --configuration Sandbox 
             - dotnet publish $PROJECT_NAME --configuration Sandbox 
             - apt-get update && apt-get -qq install ncftp
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR_SANDBOX $DOTNET_BUILD_DIR/bin/Staging/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR_SANDBOX $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
             - cd $DB_PROJECT_DIR
             - dotnet ef database update --context AppDBContext
             - dotnet ef database update --context UtilsDBContext
