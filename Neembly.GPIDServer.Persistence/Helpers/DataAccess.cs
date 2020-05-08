@@ -1,4 +1,5 @@
-﻿using Neembly.GPIDServer.Constants;
+﻿using Microsoft.EntityFrameworkCore;
+using Neembly.GPIDServer.Constants;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
@@ -107,5 +108,13 @@ namespace Neembly.GPIDServer.Persistence.Helpers
         }
         #endregion
 
+        #region Get User by OperatorId and PlayerId
+        public async Task<AppUser> GetUserByOperatorIdAndPlayerIdAsync(int operatorId, int playerId)
+        {
+            return await _appDBContext.Users
+                .Where(o => o.OperatorId == operatorId && o.PlayerId == playerId)
+                .FirstOrDefaultAsync();
+        }
+        #endregion
     }
 }

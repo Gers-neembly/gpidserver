@@ -15,6 +15,7 @@ using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Neembly.GPIDServer.WebAPI.Filters;
 using Microsoft.AspNetCore.Authorization;
+using Neembly.GPIDServer.WebAPI.Models.DTO.Outputs;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -293,6 +294,36 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             {
                 await _emailDispatcher.EmailSender(emailMessage);
             }
+        }
+        #endregion
+
+        #region Get Activation Link and Code
+        [Route("email/verification-link-code")]
+        [HttpGet]
+        public async Task<IActionResult> GetVerificationLinkAndCodeAsync(int operatorId, int playerId)
+        {
+            var result = new EmailVerificationViewModel();
+            var user = await _dataAccess.GetUserByOperatorIdAndPlayerIdAsync(operatorId, playerId);
+            var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var callbackUrl = Url.Action("verifyemail", "account",
+                values: new
+                {
+                    userId = user.Id,
+                    code = emailConfirmationToken,
+                    playerId = user.PlayerId,
+                    operatorId = user.OperatorId,
+                    urlreferer = string.Empty,
+                    urlhosted = string.Empty
+                },
+                protocol: Request.Scheme);
+
+            result.VerificationCode = emailConfirmationToken;
+            result.VerificationLink = callbackUrl;
+
+            if (result == null)
+                return NoContent();
+
+            return Ok(result);
         }
         #endregion
         #endregion
