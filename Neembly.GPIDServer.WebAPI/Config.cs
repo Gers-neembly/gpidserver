@@ -89,7 +89,8 @@ namespace Neembly.GPIDServer.WebAPI
                                 ClientId = authClientItem.ClientId,
                                 AllowedGrantTypes = GrantTypes.ClientCredentials,
                                 ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
-                                AllowedScopes = {authClientItem.ApiScope}
+                                AllowedScopes = {authClientItem.ApiScope},
+                                AccessTokenLifetime = authClientItem.LifeTime
                             }
                         );
                     }

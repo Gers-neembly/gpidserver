@@ -300,23 +300,14 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region Get Activation Link and Code
         [Route("email/verification-link-code")]
         [HttpGet]
-        public async Task<IActionResult> GetVerificationLinkAndCodeAsync(int operatorId, int playerId)
+        public async Task<IActionResult> GetVerificationLinkAndCodeAsync(int operatorId, int playerId, string operatorDomain)
         {
             var result = new EmailVerificationViewModel();
             var user = await _dataAccess.GetUserByOperatorIdAndPlayerIdAsync(operatorId, playerId);
             var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var callbackUrl = Url.Action("verifyemail", "account",
-                values: new
-                {
-                    userId = user.Id,
-                    code = emailConfirmationToken,
-                    playerId = user.PlayerId,
-                    operatorId = user.OperatorId,
-                    urlreferer = string.Empty,
-                    urlhosted = string.Empty
-                },
-                protocol: Request.Scheme);
+           
 
+            var callbackUrl = $"https://{operatorDomain}/verify-email?userId={user.Id}&code={Uri.EscapeDataString(emailConfirmationToken)}&playerId={user.PlayerId}&operatorId={user.OperatorId}&urlreferer={string.Empty}&urlhosted={string.Empty}";
             result.VerificationCode = emailConfirmationToken;
             result.VerificationLink = callbackUrl;
 
