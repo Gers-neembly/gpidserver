@@ -1,12 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Neembly.GPIDServer.Constants;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
-using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 
@@ -50,7 +48,13 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public async Task<IActionResult> Change([FromBody] ChangePasswordDTO changePassWordInfo)
         {
             string userName = $"{changePassWordInfo.UserName}_{changePassWordInfo.OperatorId}";
-            AppUser ppUser = _dataAccess.GetAppUser(changePassWordInfo.Email, userName);
+            AppUser ppUser;
+
+            if (!string.IsNullOrEmpty(changePassWordInfo.Email))
+                ppUser = _dataAccess.GetAppUser(changePassWordInfo.Email, userName);
+            else
+                ppUser = await _dataAccess.GetAppUser(userName);
+
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             var result = await _userManager.ChangePasswordAsync(ppUser, changePassWordInfo.CurrentPassword, changePassWordInfo.NewPassword);
