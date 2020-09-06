@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using System.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -68,9 +69,16 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public async Task<IActionResult> Reset(string userName, string email, string token, string newPassword, string operatorId, string homepage)
         {
             string username = $"{userName}_{operatorId}";
-            AppUser ppUser = _dataAccess.GetAppUser(email, username);
+            AppUser ppUser;
+
+            if (!string.IsNullOrEmpty(email))
+                ppUser = _dataAccess.GetAppUser(email, username);
+            else
+                ppUser = await _dataAccess.GetAppUser(username);
+            
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
+
             var result = await _userManager.ResetPasswordAsync(ppUser, token, newPassword);
             if (!result.Succeeded)
                 return BadRequest(result);
@@ -81,17 +89,22 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Reset
-        [NeemblyAuthorize]
         [Route("reset/token")]
         [HttpPost]
         public async Task<IActionResult> ResetToken([FromBody] ResetPasswordTokenDTO resetPasswordToken)
         {
             string userName = $"{resetPasswordToken.UserName}_{resetPasswordToken.OperatorId}";
-            AppUser ppUser = _dataAccess.GetAppUser(resetPasswordToken.Email, userName);
+            AppUser ppUser;
+
+            if (!string.IsNullOrEmpty(resetPasswordToken.Email))
+                ppUser = _dataAccess.GetAppUser(resetPasswordToken.Email, userName);
+            else
+                ppUser = await _dataAccess.GetAppUser(userName);
+
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             var result = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
-            return Ok(result);
+            return Ok(HttpUtility.UrlEncode(result));
         }
         #endregion
 
