@@ -1,5 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Web;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -78,7 +80,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
-
+            token = token.Replace(" ", "+");
             var result = await _userManager.ResetPasswordAsync(ppUser, token, newPassword);
             if (!result.Succeeded)
                 return BadRequest(result);
@@ -96,7 +98,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             string userName = $"{resetPasswordToken.UserName}_{resetPasswordToken.OperatorId}";
             AppUser ppUser = _dataAccess.GetAppUser(resetPasswordToken.Email, userName);
-            
+                        
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             var result = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
@@ -143,7 +145,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
-            var link = $"https://{operatorDomain}/reset-password?tokenAuth={HttpUtility.UrlEncode(token)}&userName={username}&operatorId={operatorId}";
+            var link = $"https://{operatorDomain}/reset-password/{Uri.EscapeDataString(token)}?username={username}&operatorId={operatorId}";
             return Ok(link);
         }
         #endregion
@@ -160,6 +162,19 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
             var result = await _userManager.ResetPasswordAsync(ppUser, token, resetPassword.NewPassword);
+            return Ok(result);
+        }
+        #endregion
+
+        #region Verify Token Reset Password
+        [Route("verify-token/reset-password")]
+        [HttpGet]
+        public async Task<IActionResult> VerifyTokenResetPassword(int operatorId, string username, string token)
+        {
+            string userName = $"{username}_{operatorId}";
+            AppUser ppUser = await _dataAccess.GetAppUser(userName);
+            token = token.Replace(" ", "+");
+            var result = await _userManager.VerifyUserTokenAsync(ppUser, _userManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", token);
             return Ok(result);
         }
         #endregion
