@@ -89,22 +89,18 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Reset
+        [NeemblyAuthorize]
         [Route("reset/token")]
         [HttpPost]
         public async Task<IActionResult> ResetToken([FromBody] ResetPasswordTokenDTO resetPasswordToken)
         {
             string userName = $"{resetPasswordToken.UserName}_{resetPasswordToken.OperatorId}";
-            AppUser ppUser;
-
-            if (!string.IsNullOrEmpty(resetPasswordToken.Email))
-                ppUser = _dataAccess.GetAppUser(resetPasswordToken.Email, userName);
-            else
-                ppUser = await _dataAccess.GetAppUser(userName);
-
+            AppUser ppUser = _dataAccess.GetAppUser(resetPasswordToken.Email, userName);
+            
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             var result = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
-            return Ok(HttpUtility.UrlEncode(result));
+            return Ok(result);
         }
         #endregion
 
@@ -134,6 +130,24 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Ok(result);
         }
         #endregion
+
+        #region Reset
+        [Route("reset/link")]
+        [HttpGet]
+        public async Task<IActionResult> ResetPasswordLink(int operatorId, string operatorDomain, string username)
+        {
+            string userName = $"{username}_{operatorId}";
+            AppUser ppUser = await _dataAccess.GetAppUser(userName);
+
+            if (ppUser == null)
+                return NotFound(GlobalConstants.ErrUserAccountNotExisting);
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
+            var link = $"https://{operatorDomain}/reset-password?tokenAuth={HttpUtility.UrlEncode(token)}&userName={username}&operatorId={operatorId}";
+            return Ok(link);
+        }
+        #endregion
+
         #region Reset
         [NeemblyAuthorize]
         [Route("reset/autoToken")]
