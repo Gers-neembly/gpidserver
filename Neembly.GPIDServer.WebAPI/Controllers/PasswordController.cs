@@ -145,7 +145,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
-            var link = $"https://{operatorDomain}/reset-password/{Uri.EscapeDataString(token)}?username={username}&operatorId={operatorId}";
+            var link = $"https://{operatorDomain}/reset-password/{Uri.EscapeDataString(token)}?username={username}";
             return Ok(link);
         }
         #endregion
