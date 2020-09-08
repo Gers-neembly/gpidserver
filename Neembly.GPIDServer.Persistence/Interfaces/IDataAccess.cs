@@ -9,6 +9,7 @@ namespace Neembly.GPIDServer.Persistence.Interfaces
     {
         AppUser GetAppUser(string email, string username);
         AppUser GetAppUser(string username, int playerId);
+        Task<AppUser> GetAppUser(string username);
         bool UserExists(string email, string username, int operatorId);
         IEnumerable<int> GetPlayersOperators(string netUserId);
         Task<int> GeneratePlayerId(string userName, string email, int operatorId);

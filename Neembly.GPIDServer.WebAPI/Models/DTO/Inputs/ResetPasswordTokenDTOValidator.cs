@@ -8,7 +8,7 @@ namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
         public ResetPasswordTokenDTOValidator()
         {
             RuleFor(x => x.UserName).NotNull().NotEmpty();
-            RuleFor(x => x.Email).NotNull().NotEmpty().EmailAddress();
+            RuleFor(x => x.Email).NotNull().EmailAddress();
             RuleFor(x => x.OperatorId).NotNull().NotEmpty().GreaterThan(0);
         }
         #endregion
