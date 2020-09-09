@@ -126,7 +126,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 NewPassword = resetPasswordToken.NewPassword,
                 HomePage = resetPasswordToken.HomePage
             };
-            var link = $"{resetPasswordToken.HomePage}/reset-password-bo/{Uri.EscapeDataString(token)}?username={resetPasswordToken.UserName}&newPassword={resetPasswordToken.NewPassword}";
+            var link = $"{HttpContext.Request.Scheme}://{resetPasswordToken.HomePage}/reset-password-bo/{Uri.EscapeDataString(token)}?username={resetPasswordToken.UserName}&newPassword={resetPasswordToken.NewPassword}";
             return Ok(link);
         }
         #endregion
@@ -143,7 +143,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
-            var link = $"https://{operatorDomain}/reset-password/{Uri.EscapeDataString(token)}?username={username}";
+            var link = $"{HttpContext.Request.Scheme}://{operatorDomain}/reset-password/{Uri.EscapeDataString(token)}?username={username}";
             return Ok(link);
         }
         #endregion
