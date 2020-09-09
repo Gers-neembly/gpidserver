@@ -307,7 +307,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
            
 
-            var callbackUrl = $"https://{operatorDomain}/verify-email?userId={user.Id}&code={Uri.EscapeDataString(emailConfirmationToken)}&playerId={user.PlayerId}&operatorId={user.OperatorId}&urlreferer={string.Empty}&urlhosted={string.Empty}";
+            var callbackUrl = $"{HttpContext.Request.Scheme}://{operatorDomain}/verify-email?userId={user.Id}&code={Uri.EscapeDataString(emailConfirmationToken)}&playerId={user.PlayerId}&operatorId={user.OperatorId}&urlreferer={string.Empty}&urlhosted={string.Empty}";
             result.VerificationCode = emailConfirmationToken;
             result.VerificationLink = callbackUrl;
 
