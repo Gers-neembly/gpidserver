@@ -113,23 +113,21 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public async Task<IActionResult> ResetTokenLink([FromBody] ResetPasswordAutoTokenDTO resetPasswordToken)
         {
             string userName = $"{resetPasswordToken.UserName}_{resetPasswordToken.OperatorId}";
-            AppUser ppUser = _dataAccess.GetAppUser(resetPasswordToken.Email, userName);
+            AppUser ppUser = await _dataAccess.GetAppUser(userName);
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
-            var tokenLink = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
             ResetPasswordDTO resetPasswordEntity = new ResetPasswordDTO
             {
                 UserName = resetPasswordToken.UserName,
                 Email = resetPasswordToken.Email,
                 OperatorId = resetPasswordToken.OperatorId,
-                Token = tokenLink,
+                Token = token,
                 NewPassword = resetPasswordToken.NewPassword,
                 HomePage = resetPasswordToken.HomePage
             };
-            var result = Url.Action("Reset",
-                                "Password", resetPasswordEntity,
-                                 protocol: HttpContext.Request.Scheme);
-            return Ok(result);
+            var link = $"{resetPasswordToken.HomePage}/reset-password-bo/{Uri.EscapeDataString(token)}?username={resetPasswordToken.UserName}&newPassword={resetPasswordToken.NewPassword}";
+            return Ok(link);
         }
         #endregion
 
