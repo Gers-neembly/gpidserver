@@ -126,7 +126,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 NewPassword = resetPasswordToken.NewPassword,
                 HomePage = resetPasswordToken.HomePage
             };
-            var link = $"{resetPasswordToken.HomePage}/reset-password-bo/{Uri.EscapeDataString(token)}?username={resetPasswordToken.UserName}&newPassword={resetPasswordToken.NewPassword}";
+            var link = $"https://{resetPasswordToken.HomePage}/reset-password-bo/{Uri.EscapeDataString(token)}?username={resetPasswordToken.UserName}&newPassword={resetPasswordToken.NewPassword}";
             return Ok(link);
         }
         #endregion
