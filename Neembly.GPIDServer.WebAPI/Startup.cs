@@ -19,6 +19,7 @@ using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Services;
 using Neembly.GPIDServer.WebAPI.Validator;
+using System;
 
 namespace Neembly.GPIDServer.WebAPI
 {
@@ -73,6 +74,13 @@ namespace Neembly.GPIDServer.WebAPI
             services.Configure<IdentityOptions>(o => {
                 o.SignIn.RequireConfirmedEmail = false;
             });
+
+            var resetPasswordTokenSettings = new ResetPasswordTokenSettings();
+            Configuration.GetSection(nameof(ResetPasswordTokenSettings)).Bind(resetPasswordTokenSettings);
+            services.AddSingleton(resetPasswordTokenSettings);
+
+            services.Configure<DataProtectionTokenProviderOptions>(opt =>
+                opt.TokenLifespan = TimeSpan.FromHours(resetPasswordTokenSettings.TokenLifeSpan));
 
             // dependency injections
             services.AddScoped<IDataAccess, DataAccess>();

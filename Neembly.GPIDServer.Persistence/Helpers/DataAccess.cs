@@ -58,6 +58,13 @@ namespace Neembly.GPIDServer.Persistence.Helpers
                                              && r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
         }
 
+        public async Task<AppUser> GetAppUser(string username)
+        {
+            return await _appDBContext.Users
+                .Where(u => u.UserName == username)
+                .FirstOrDefaultAsync();
+        }
+
         public IEnumerable<int> GetPlayersOperators(string netUserId)
         {
             return _appDBContext.Users.Where(r => r.Id.Equals(netUserId, StringComparison.InvariantCultureIgnoreCase)).Select(r => r.OperatorId).ToList();
