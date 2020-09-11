@@ -6,6 +6,10 @@
     <ProjectGuid>{F206DA25-6BF0-4861-A0D3-CE5B41653385}</ProjectGuid>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Sandbox|AnyCPU'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="Exceptions\" />
     <Folder Include="wwwroot\" />
