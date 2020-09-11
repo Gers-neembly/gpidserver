@@ -109,6 +109,17 @@ namespace Neembly.GPIDServer.WebAPI
                 .AllowAnyHeader()
                 .AllowCredentials());
 
+
+            var forwardOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false
+            };
+
+            forwardOptions.KnownNetworks.Clear();
+            forwardOptions.KnownProxies.Clear();
+
+            app.UseForwardedHeaders(forwardOptions);
             app.UseIdentityServer();
             app.UseHttpsRedirection();
             app.UseMvc();
