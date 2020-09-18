@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +11,7 @@ using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Neembly.GPIDServer.WebAPI.Filters;
-using Microsoft.AspNetCore.Authorization;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Outputs;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
@@ -30,8 +27,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private readonly IConfiguration _configuration;
         private readonly IDataAccess _dataAccess;
         private readonly IPlayerNetService _playerNetServices;
-        private readonly IEmailDispatcher _emailDispatcher;
-        private readonly IEmailQueueService _emailQueueService;
         private readonly ITokenProviderService _tokenProviderServices;
         private readonly AuthClientConfiguration _authConfig;
         #endregion
@@ -45,9 +40,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             IConfiguration configuration,
             IDataAccess dataAccess,
             IPlayerNetService playerNetServices,
-            ITokenProviderService tokenProviderServices,
-            IEmailDispatcher emailDispatcher,
-            IEmailQueueService emailQueueService
+            ITokenProviderService tokenProviderServices
             )
         {
             _userManager = userManager;
@@ -58,8 +51,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _dataAccess = dataAccess;
             _playerNetServices = playerNetServices;
             _tokenProviderServices = tokenProviderServices;
-            _emailDispatcher = emailDispatcher;
-            _emailQueueService = emailQueueService;
         }
         #endregion
 
@@ -181,12 +172,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                                                           playerId = newPlayerId, operatorId = registerInfo.OperatorId,
                                                           urlreferer = urlReferer, urlhosted = registerInfo.HostedUrl},
                                                           protocol: Request.Scheme);
-
-            //Remove due to NEEM-1053
-            //Email is no longer supported in ID Server
-            //await SendWelcomeEmail(urlReferer, user.DisplayUsername, user.Email, registerInfo.OperatorId);
-            //await SendActivationEmail(callbackUrl, user.DisplayUsername, user.Email, registerInfo.OperatorId);
-
             return Ok(newPlayerId);
         }
         #endregion
@@ -264,36 +249,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registrationStatus)
         {
             return await _dataAccess.SetRegistrationStatus(userId, registrationStatus);
-        }
-        #endregion
-
-        #region Welcome Email
-        private async Task SendWelcomeEmail(string referer, string name, string email, int operatorId)
-        {   
-            var emailMessage = _emailDispatcher.CreateWelcomeEmail(referer, name, email, operatorId);
-            await _emailQueueService.Send(emailMessage);
-
-            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
-            if (environmentName != "release" 
-                 || environmentName != "production")
-            {
-                await _emailDispatcher.EmailSender(emailMessage);
-            }
-        }
-        #endregion
-
-        #region Activation Email
-        private async Task SendActivationEmail(string content, string name, string email, int operatorId)
-        {
-            var emailMessage = _emailDispatcher.CreateEmailActivationLink(content, name, email, operatorId);
-            await _emailQueueService.Send(emailMessage);
-
-            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").ToLower();
-            if (environmentName != "release"
-                 || environmentName != "production")
-            {
-                await _emailDispatcher.EmailSender(emailMessage);
-            }
         }
         #endregion
 

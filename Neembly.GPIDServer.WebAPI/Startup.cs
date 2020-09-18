@@ -40,8 +40,6 @@ namespace Neembly.GPIDServer.WebAPI
             services.AddDbContext<AppDBContext>(options =>
                                                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddDbContext<UtilsDBContext>(options =>
-                                               options.UseNpgsql(Configuration.GetConnectionString("UtilsConnection")));
             //// Add Identity services
             services.AddIdentity<AppUser, IdentityRole>(user =>
                     {
@@ -85,8 +83,6 @@ namespace Neembly.GPIDServer.WebAPI
 
             // dependency injections
             services.AddScoped<IDataAccess, DataAccess>();
-            services.AddScoped<IEmailDispatcher, EmailDispatcher>();
-            services.AddScoped<IEmailQueueService, DbEmailQueueService>();
             services.AddScoped<IPlayerNetService, PlayerNetService>();
             services.AddScoped<ITokenProviderService, TokenProviderService>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
