@@ -7,11 +7,11 @@ pipelines:
     # manually run 
     sonar: 
       # This is for sonar at runtime checking
-      - step:
-          name: Runtime sonarqube testing
-          caches:
-            - dotnetcore
-          script:
+    - step:
+        name: Runtime sonarqube testing
+        caches:
+          - dotnetcore
+        script:
           - echo "On-demand Sonarqube checker running"
           - export PATH="$PATH:/root/.dotnet/tools"
           - apt-get update && apt-get install -y openjdk-8-jre
@@ -21,56 +21,62 @@ pipelines:
           - dotnet build
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
     deploy-dev:
-      - step:
-          name: Deploy to DEV-test
-          script:
-            - echo "Manual deploy to DEV-test environment"
-            - export ASPNETCORE_ENVIRONMENT="Development"
-            - dotnet restore
-            - dotnet build $PROJECT_NAME --configuration Debug 
-            - dotnet publish $PROJECT_NAME --configuration Debug 
-            - apt-get update && apt-get -qq install ncftp
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-            - cd $DB_PROJECT_DIR
-            - dotnet ef database update
-            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR builddate.txt
+    - step:
+      name: Deploy to DEV-test
+        caches:
+          - dotnetcore
+      script:
+      - echo "Manual deploy to DEV-test environment"
+      - export ASPNETCORE_ENVIRONMENT="Development"
+      - dotnet restore
+      - dotnet build $PROJECT_NAME --configuration Debug 
+      - dotnet publish $PROJECT_NAME --configuration Debug 
+      - apt-get update && apt-get -qq install ncftp
+      - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+      - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+      - cd $DB_PROJECT_DIR
+      - dotnet ef database update
+      - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+      - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR builddate.txt
     deploy-sb:
-      - step:
-          name: Deploy to UAT-Sandbox
-          script:
-            - echo "Manual deploy to UAT-sandbox environment"
-            - export ASPNETCORE_ENVIRONMENT="Sandbox"
-            - dotnet restore
-            - dotnet build $PROJECT_NAME --configuration Sandbox 
-            - dotnet publish $PROJECT_NAME --configuration Sandbox 
-            - apt-get update && apt-get -qq install ncftp
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-            - cd $DB_PROJECT_DIR
-            - dotnet ef database update
-            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
+    - step:
+        name: Deploy to UAT-Sandbox
+        caches:
+          - dotnetcore
+        script:
+          - echo "Manual deploy to UAT-Sandbox environment"
+          - export ASPNETCORE_ENVIRONMENT="Sandbox"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Sandbox 
+          - dotnet publish $PROJECT_NAME --configuration Sandbox 
+          - apt-get update && apt-get -qq install ncftp
+          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+      - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - cd $DB_PROJECT_DIR
+          - dotnet ef database update
+          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
     deploy-prod-ClusterAlpha:
-      - step:
-          name: Deploy to Production-Release
-          script:
-            - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
-            - echo "IP Address"
-            - curl ifconfig.me
-            - export ASPNETCORE_ENVIRONMENT="Release"
-            - export ASPNETCORE_CLUSTER="ClusterAlpha"
-            - dotnet restore
-            - dotnet build $PROJECT_NAME --configuration Release 
-            - dotnet publish $PROJECT_NAME --configuration Release 
-            - apt-get update && apt-get -qq install ncftp
-            - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-            - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-            - cd $DB_PROJECT_DIR
-            - dotnet ef database update
-            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-            - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_DEPLOYDIR builddate.txt
+    - step:
+      name: Deploy to Production-Release
+        caches:
+          - dotnetcore
+      script:
+      - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
+      - echo "IP Address"
+      - curl ifconfig.me
+      - export ASPNETCORE_ENVIRONMENT="Release"
+      - export ASPNETCORE_CLUSTER="ClusterAlpha"
+      - dotnet restore
+      - dotnet build $PROJECT_NAME --configuration Release 
+      - dotnet publish $PROJECT_NAME --configuration Release 
+      - apt-get update && apt-get -qq install ncftp
+          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - cd $DB_PROJECT_DIR
+          - dotnet ef database update
+          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+          - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_DEPLOYDIR builddate.txt
   default:
     # task per ticket item build
     - step:
@@ -81,7 +87,7 @@ pipelines:
           - dotnet restore
           - dotnet build $PROJECT_NAME --configuration Debug
   branches:
-   master:
+    master:
     # master push-merge build 
     - step:
         name: Deploy to test
@@ -90,45 +96,48 @@ pipelines:
           - dotnetcore
         script: 
           - echo "Development deploy"
+          - export ASPNETCORE_ENVIRONMENT="Development"
           - dotnet restore
           - dotnet build $PROJECT_NAME --configuration Debug
           - echo "Select pipeline deploy-to-dev to promote DEV environment manually"
-   sandbox:
+    sandbox:
     # sandbox push-merge build 
-        - step:
-            name: Deploy to sandbox
-            deployment: sandbox
-            script: 
-            - echo "Auto Deployment CI/CD to UAT-sandbox environment"
-            - export ASPNETCORE_ENVIRONMENT="Sandbox"
-            - dotnet restore
-            - dotnet build $PROJECT_NAME --configuration Sandbox 
-            - dotnet publish $PROJECT_NAME --configuration Sandbox 
-            - apt-get update && apt-get -qq install ncftp
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-            - cd $DB_PROJECT_DIR
-            - dotnet ef database update
-            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
-   release:
+  - step:
+    name: Deploy to sandbox
+    deployment: sandbox
+        caches:
+          - dotnetcore
+    script: 
+    - echo "Auto Deployment CI/CD to UAT-sandbox environment"
+    - export ASPNETCORE_ENVIRONMENT="Sandbox"
+    - dotnet restore
+    - dotnet build $PROJECT_NAME --configuration Sandbox 
+    - dotnet publish $PROJECT_NAME --configuration Sandbox 
+    - apt-get update && apt-get -qq install ncftp
+    - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+    - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+    - cd $DB_PROJECT_DIR
+    - dotnet ef database update
+    - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+    - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
+    release:
     # production push-merge build 
-       - step:
-            name: Deploy to production
-            deployment: production
-            caches:
-              - dotnetcore
-            script: 
-            - echo "Auto Deployment CI/CD to PROD-release environment"
-            - export ASPNETCORE_ENVIRONMENT="Release"
-            - export ASPNETCORE_CLUSTER="Sandbox"
-            - dotnet restore
-            - dotnet build $PROJECT_NAME --configuration Release 
-            - dotnet publish $PROJECT_NAME --configuration Release 
-            - apt-get update && apt-get -qq install ncftp
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-            - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-            - cd $DB_PROJECT_DIR
-            - dotnet ef database update
-            - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-            - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR builddate.txt
+    - step:
+    name: Deploy to production
+    deployment: production
+    caches:
+      - dotnetcore
+    script: 
+        - echo "Auto Deployment CI/CD to PROD-release environment"
+      - export ASPNETCORE_ENVIRONMENT="Release"
+      - export ASPNETCORE_CLUSTER="Sandbox"
+      - dotnet restore
+      - dotnet build $PROJECT_NAME --configuration Release 
+      - dotnet publish $PROJECT_NAME --configuration Release 
+      - apt-get update && apt-get -qq install ncftp
+      - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+      - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+      - cd $DB_PROJECT_DIR
+      - dotnet ef database update
+      - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+      - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR builddate.txt
