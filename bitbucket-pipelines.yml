@@ -57,6 +57,8 @@ pipelines:
           name: Deploy to Production-Release
           script:
             - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
+            - echo "IP Address"
+            - curl ifconfig.me
             - export ASPNETCORE_ENVIRONMENT="Release"
             - export ASPNETCORE_CLUSTER="ClusterAlpha"
             - dotnet restore
