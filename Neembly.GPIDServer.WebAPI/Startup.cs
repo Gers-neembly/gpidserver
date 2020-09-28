@@ -3,6 +3,7 @@ using IdentityServer4.Services;
 using IdentityServer4.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,8 +40,6 @@ namespace Neembly.GPIDServer.WebAPI
             services.AddDbContext<AppDBContext>(options =>
                                                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddDbContext<UtilsDBContext>(options =>
-                                               options.UseNpgsql(Configuration.GetConnectionString("UtilsConnection")));
             //// Add Identity services
             services.AddIdentity<AppUser, IdentityRole>(user =>
                     {
@@ -84,8 +83,6 @@ namespace Neembly.GPIDServer.WebAPI
 
             // dependency injections
             services.AddScoped<IDataAccess, DataAccess>();
-            services.AddScoped<IEmailDispatcher, EmailDispatcher>();
-            services.AddScoped<IEmailQueueService, DbEmailQueueService>();
             services.AddScoped<IPlayerNetService, PlayerNetService>();
             services.AddScoped<ITokenProviderService, TokenProviderService>();
             services.AddTransient<IProfileService, IdentityClaimsProfileService>();
@@ -117,6 +114,17 @@ namespace Neembly.GPIDServer.WebAPI
                 .AllowAnyHeader()
                 .AllowCredentials());
 
+
+            var forwardOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false
+            };
+
+            forwardOptions.KnownNetworks.Clear();
+            forwardOptions.KnownProxies.Clear();
+
+            app.UseForwardedHeaders(forwardOptions);
             app.UseIdentityServer();
             app.UseHttpsRedirection();
             app.UseMvc();

@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=alpha-db-main-do-user-7893263-0.b.db.ondigitalocean.com;Port=25061;Database=ppidentityserver-pool;Username=ppidentityserver;Password=vxewyc0k6pxc4i5n;Sslmode=Require;Server Compatibility Mode=Redshift;TrustServerCertificate=True;"
+  }
+}
