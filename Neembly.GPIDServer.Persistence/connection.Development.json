@@ -1,5 +1,5 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=178.128.125.73;Port=9099;Username=identity_api;Password=BourneIdentity;Database=gpidentityserver;",
+    "DefaultConnection": "Host=dev-db-do-user-4395787-0.b.db.ondigitalocean.com;Port=25061;Username=doadmin;Password=krhsf4693casvawh;Database=ppidentityserver-pool;Sslmode=Require;Server Compatibility Mode=Redshift;"
   }
 }
