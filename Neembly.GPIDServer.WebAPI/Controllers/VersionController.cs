@@ -15,8 +15,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var versionTag = new VersionInfo
             {
                 ProviderName = "Neembly Identity Host Service",
-                Version = "Version 1.0.0",
-                BuildNo = $"Build {Assembly.GetEntryAssembly().GetName().Version}",
+                Version = $"Version {Assembly.GetEntryAssembly().GetName().Version}",
+                BuildNo = $"Build {Assembly.GetEntryAssembly().GetName().FullName}",
                 Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
                 Cluster = Environment.GetEnvironmentVariable("ASPNETCORE_CLUSTER")
             };
