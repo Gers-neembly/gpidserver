@@ -9,14 +9,18 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     [ApiController]
     public class VersionController : ControllerBase
     {
+        #region Rebranding Tag
+        public const string VersionRebranding = "WK";
+        #endregion
+
         [HttpGet]
         public IActionResult Get()
         {
             var versionTag = new VersionInfo
             {
-                ProviderName = "Neembly Identity Host Service",
+                ProviderName = $"{VersionRebranding} Identity Host Service",
                 Version = $"Version {Assembly.GetEntryAssembly().GetName().Version}",
-                BuildNo = $"Build {Assembly.GetEntryAssembly().GetName().FullName}",
+                BuildNo = $"Build {Assembly.GetEntryAssembly().GetName().FullName.Replace("Neembly", VersionRebranding)}",
                 Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
                 Cluster = Environment.GetEnvironmentVariable("ASPNETCORE_CLUSTER")
             };
