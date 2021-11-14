@@ -23,6 +23,7 @@ pipelines:
     deploy-dev:
     - step:
         name: Deploy to DEV-test
+        deployment: test
         caches:
           - dotnetcore
         script:
@@ -44,6 +45,7 @@ pipelines:
     deploy-sb:
     - step:
         name: Deploy to UAT-Sandbox
+        deployment: sandbox
         caches:
           - dotnetcore
         script:
@@ -66,7 +68,6 @@ pipelines:
     # production push-merge build 
     - step:
         name: Deploy to Preprod
-        deployment: production
         caches:
           - dotnetcore
         script:
@@ -93,6 +94,7 @@ pipelines:
       - name: VersionNo
     - step:
         name: Deploy ProdAlpha
+        deployment: production
         caches:
           - dotnetcore
         script:
@@ -136,7 +138,6 @@ pipelines:
     # master push-merge build 
     - step:
         name: Deploy to test
-        deployment: test
         caches:
           - dotnetcore
         script:
@@ -149,7 +150,6 @@ pipelines:
     # sandbox push-merge build 
     - step:
         name: Deploy to sandbox
-        deployment: sandbox
         caches:
           - dotnetcore
         script:
@@ -162,7 +162,6 @@ pipelines:
     # production push-merge build 
     - step:
         name: Deploy to production
-        deployment: production
         caches:
           - dotnetcore
         script:
