@@ -121,7 +121,7 @@ pipelines:
           - dotnet ef database update
           - echo "Uploading DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_DEPLOYDIR builddate.txt
+          - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_DEPLOYDIR builddate.txt
   default:
     # task per ticket item build
     - step:
