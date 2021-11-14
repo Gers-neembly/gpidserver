@@ -86,7 +86,7 @@ pipelines:
           - echo "Updating DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
           - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR builddate.txt
-    deploy-prod-alpha-boids:
+    deploy-prod-alpha-ppids:
     - variables:
       - name: ServerId
       - name: Password 		  
@@ -95,6 +95,12 @@ pipelines:
         caches:
           - dotnetcore
         script:
+          - echo $ServerId
+          - if [ "$Password" != "$PROD_VAR_PASSWORD" ]; then exit 1 ; fi
+          - if [ "$ServerId" = "1" ]; then export FTP_URL_WS_PROD=$FTP_URL_WS1_PROD ; fi
+          - if [ "$ServerId" = "2" ]; then export FTP_URL_WS_PROD=$FTP_URL_WS2_PROD ; fi
+          - echo $FTP_URL_WS_PROD
+          - if [ "$FTP_URL_WS_PROD" == "" ]; then exit 1 ; fi
           - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
           - echo "IP Address"
           - curl ifconfig.me
@@ -105,8 +111,8 @@ pipelines:
           - dotnet publish $PROJECT_NAME --configuration Release 
           - echo "Uploading Server"
           - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS1_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
+          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
