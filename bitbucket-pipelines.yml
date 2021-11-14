@@ -91,7 +91,7 @@ pipelines:
       - name: ServerId
       - name: Password 		  
     - step:
-        name: Deploy to Production-Release
+        name: Deploy ProdAlpha
         caches:
           - dotnetcore
         script:
