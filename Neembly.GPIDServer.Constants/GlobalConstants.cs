@@ -35,6 +35,8 @@
 
         #region Operator Tag Ids
         public const int PlayerIdTagStarts = 10000;
+        public const int PlayerIdSegmentSize = 300000;
+        public const int PlayerIdOverFlows = 1000000;
         #endregion
 
 
