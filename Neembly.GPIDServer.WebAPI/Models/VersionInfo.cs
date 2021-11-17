@@ -7,5 +7,6 @@
         public string BuildNo { get; set; }
         public string Environment { get; set; }
         public string Cluster { get; set; }
+        public string Name { get; set; }
     }
 }
