@@ -124,6 +124,27 @@ pipelines:
           - echo "Uploading DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
           - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_DEPLOYDIR builddate.txt
+    deploy-prod-alpha-database-ppids:
+    - step:
+        name: Deploy DB ProdAlpha
+        deployment: production
+        caches:
+          - dotnetcore
+        script:
+          - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
+          - echo "IP Address"
+          - curl ifconfig.me
+          - export ASPNETCORE_ENVIRONMENT="Release"
+          - export ASPNETCORE_CLUSTER="ClusterAlpha"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Release /p:AssemblyVersion=$BUILD_VERSION 
+          - dotnet publish $PROJECT_NAME --configuration Release /p:AssemblyVersion=$BUILD_VERSION 
+          - echo "Updating Database"
+          - cd $DB_PROJECT_DIR
+          - dotnet ef database update
+          - echo "Uploading DateMarker"
+          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
+          - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_DEPLOYDIR builddate.txt
   default:
     # task per ticket item build
     - step:
