@@ -162,6 +162,20 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var result = await _userManager.ResetPasswordAsync(ppUser, token, resetPassword.NewPassword);
             return Ok(result);
         }
+
+        [NeemblyAuthorize]
+        [Route("reset/forced")]
+        [HttpPost]
+        public async Task<IActionResult> ResetPasswordForced([FromBody] ResetPasswordAutoTokenDTO resetPassword)
+        {
+            string userName = $"{resetPassword.UserName}_{resetPassword.OperatorId}";
+            AppUser ppUser = _dataAccess.GetAppUser(resetPassword.Email, userName);
+            if (ppUser == null)
+                return NotFound(GlobalConstants.ErrUserAccountNotExisting);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
+            var result = await _userManager.ResetPasswordAsync(ppUser, token, resetPassword.NewPassword);
+            return Ok(result);
+        }
         #endregion
 
         #region Verify Token Reset Password
