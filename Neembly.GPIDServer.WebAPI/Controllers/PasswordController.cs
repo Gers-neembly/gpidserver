@@ -169,7 +169,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public async Task<IActionResult> ResetPasswordForced([FromBody] ResetPasswordAutoTokenDTO resetPassword)
         {
             string userName = $"{resetPassword.UserName}_{resetPassword.OperatorId}";
-            AppUser ppUser = _dataAccess.GetAppUser(resetPassword.Email, userName);
+            AppUser ppUser = await _dataAccess.GetAppUser(userName);
             if (ppUser == null)
                 return NotFound(GlobalConstants.ErrUserAccountNotExisting);
             var token = await _userManager.GeneratePasswordResetTokenAsync(ppUser);
