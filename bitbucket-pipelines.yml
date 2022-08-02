@@ -1,7 +1,6 @@
 # Neembly Gaming Platform, Copyright(C) 2019
 # Pipeline build definitions
-image: microsoft/dotnet:sdk
-
+image: mcr.microsoft.com/dotnet/core/sdk:2.2
 pipelines:
   custom:
     # manually run 
