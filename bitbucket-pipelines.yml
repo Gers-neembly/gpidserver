@@ -63,6 +63,37 @@ pipelines:
           - echo "Updating DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
           - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
+    deploy-sb-ws:
+    - variables:
+      - name: ServerId
+      - name: Password 		
+    - step:
+        name: Deploy SB-WS
+        deployment: sandbox
+        caches:
+          - dotnetcore
+        script:
+          - echo $ServerId
+          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
+          - if [ "$ServerId" = "1" ]; then export SSH_SERVER_SBWS=$SSH_SERVER_SBWS1 ; fi
+          - if [ "$ServerId" = "2" ]; then export SSH_SERVER_SBWS=$SSH_SERVER_SBWS2 ; fi
+          - echo $SSH_SERVER_SBWS
+          - if [ "$SSH_SERVER_SBWS" = "" ]; then exit 1 ; fi
+          - echo "Deploy to SB-WS"
+          - export ASPNETCORE_ENVIRONMENT="Sandbox"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Sandbox
+          - dotnet publish $PROJECT_NAME --configuration Sandbox
+          - echo "Uploading to Server"
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service'
+          - sleep 10
+          - echo "Updating Database"
+          - cd $DB_PROJECT_DIR
+          - dotnet ef database update
     deploy-release:
     # production push-merge build 
     - step:
