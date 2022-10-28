@@ -87,6 +87,7 @@ pipelines:
           - echo "Uploading to Server"
           - apt-get update && apt-get -y -qq install openssh-client curl
           - scp -r $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service'
