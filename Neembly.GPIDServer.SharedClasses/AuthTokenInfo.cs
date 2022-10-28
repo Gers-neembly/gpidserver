@@ -11,5 +11,7 @@ namespace Neembly.GPIDServer.SharedClasses
         public string ApiUrl { get; set; }
         public string ApiName { get; set; }
         public string ApiScope { get; set; }
+        public bool SecuredHttps { get; set; }
+
     }
 }

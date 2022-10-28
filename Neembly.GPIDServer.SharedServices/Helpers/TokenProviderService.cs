@@ -38,7 +38,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
         }
 
         private bool VerifyToken(string authToken, string issuerUrl)
-            {
+        {
             JwtSecurityTokenHandler jwtHandler = new JwtSecurityTokenHandler();
             var tokenS = jwtHandler.ReadJwtToken(authToken);
             int validCounter = 0;
@@ -57,10 +57,18 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
                 }
                 if (claim.Type.Equals("iss"))
                 {
-                    if (claim.Value.Equals(issuerUrl))
-                    { validCounter++; }
+                    if (!_authTokenInfo.SecuredHttps)
+                    {
+                        if (((new Uri(claim.Value)).Host).Equals((new Uri(issuerUrl)).Host)) { validCounter++; }
+                        else { return false; }
+                    }
                     else
-                    { return false; }
+                    {
+                        if (claim.Value.Equals(issuerUrl))
+                        { validCounter++; }
+                        else
+                        { return false; }
+                    }
                 }
                 if (claim.Type.Equals("scope"))
                 {
