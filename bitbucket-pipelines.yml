@@ -77,7 +77,7 @@ pipelines:
     - variables:
       - name: Password 		
     - step:
-        name: Deploy SB-WS
+        name: Deploy SB-Preprod
         deployment: preprod
         caches:
           - dotnetcore
