@@ -41,28 +41,6 @@ pipelines:
           - echo "Updating DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
           - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR builddate.txt
-    deploy-sb:
-    - step:
-        name: Deploy to UAT-Sandbox
-        deployment: sandbox
-        caches:
-          - dotnetcore
-        script:
-          - echo "Manual deploy to UAT-Sandbox environment"
-          - export ASPNETCORE_ENVIRONMENT="Sandbox"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Sandbox 
-          - dotnet publish $PROJECT_NAME --configuration Sandbox 
-          - echo "Uploading to Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-          - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-          - echo "Updating DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
     deploy-sb-ws:
     - variables:
       - name: ServerId
@@ -100,7 +78,7 @@ pipelines:
       - name: Password 		
     - step:
         name: Deploy SB-WS
-        deployment: sandbox
+        deployment: preprod
         caches:
           - dotnetcore
         script:
