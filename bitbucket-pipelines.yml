@@ -41,28 +41,6 @@ pipelines:
           - echo "Updating DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
           - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR builddate.txt
-    deploy-sb:
-    - step:
-        name: Deploy to UAT-Sandbox
-        deployment: sandbox
-        caches:
-          - dotnetcore
-        script:
-          - echo "Manual deploy to UAT-Sandbox environment"
-          - export ASPNETCORE_ENVIRONMENT="Sandbox"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Sandbox 
-          - dotnet publish $PROJECT_NAME --configuration Sandbox 
-          - echo "Uploading to Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-          - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-          - echo "Updating DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
     deploy-sb-ws:
     - variables:
       - name: ServerId
@@ -95,29 +73,32 @@ pipelines:
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-    deploy-release:
-    # production push-merge build 
+    deploy-preprod-release:
+    - variables:
+      - name: Password 		
     - step:
-        name: Deploy to Preprod
+        name: Deploy SB-Preprod
+        deployment: preprod
         caches:
           - dotnetcore
         script:
-          - echo "Manual Deployment CI/CD to PROD-release environment"
+          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
+          - echo "Deploy to SB-Preprod"
           - export ASPNETCORE_ENVIRONMENT="Release"
-          - export ASPNETCORE_CLUSTER="Sandbox"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Release 
-          - dotnet publish $PROJECT_NAME --configuration Release 
-          - echo "Uploading Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - dotnet build $PROJECT_NAME --configuration Release
+          - dotnet publish $PROJECT_NAME --configuration Release
+          - echo "Uploading to Server"
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PRWS@$SSH_SERVER_SBBS1:$PRWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_PRWS@$SSH_SERVER_SBBS1:$PRWS_PUBDIR$FTP_ROOTDIR_WS
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_PRWS@$SSH_SERVER_SBBS1 'sudo systemctl restart neembly-pp-auth.service'
+          - sleep 10
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-          - echo "Updating DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR builddate.txt
     deploy-prod-alpha-pub-ppids:
     - variables:
       - name: ServerId
@@ -210,6 +191,18 @@ pipelines:
           - dotnet restore
           - dotnet build $PROJECT_NAME --configuration Sandbox 
           - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
+    preprod:
+    # pre production push-merge build 
+    - step:
+        name: Deploy to pre-production
+        caches:
+          - dotnetcore
+        script:
+          - echo "Auto Deployment CI/CD to PROD-release environment"
+          - export ASPNETCORE_ENVIRONMENT="Release"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Release
+          - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"		  		  
     release:
     # production push-merge build 
     - step:
