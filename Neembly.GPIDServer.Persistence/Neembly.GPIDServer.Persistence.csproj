@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Configurations>Debug;Release;Staging;Sandbox</Configurations>
+    <Configurations>Debug;Release;Staging;Sandbox;Preprod</Configurations>
     <ProjectGuid>{17F351B7-4B4B-4AFC-8D0B-89BC618293AF}</ProjectGuid>
   </PropertyGroup>
 
