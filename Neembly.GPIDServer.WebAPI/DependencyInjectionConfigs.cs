@@ -8,6 +8,7 @@ using Neembly.GPIDServer.Persistence;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
+using Neembly.GPIDServer.WebAPI.Services;
 
 namespace Neembly.GPIDServer.WebAPI
 {
@@ -64,6 +65,9 @@ namespace Neembly.GPIDServer.WebAPI
                         options.Filters.Add(typeof(CustomExceptionFilterAttribute)))
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddFluentValidation(fv => fv.RegisterValidatorsFromAssembly(typeof(Exceptions.ValidationException).Assembly));
+
+            services.AddAuthentication()
+                        .AddGoogleAuth(services);
 
             return services;
         }
