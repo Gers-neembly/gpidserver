@@ -1,4 +1,5 @@
 ﻿using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -60,14 +61,15 @@ namespace Neembly.GPIDServer.WebAPI
             //add cross origin
             services.AddCors();
 
+            services.AddAuthentication()
+                    .AddGoogleAuth(services);
+
             //mvc services
             services.AddMvc(options => 
                         options.Filters.Add(typeof(CustomExceptionFilterAttribute)))
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddFluentValidation(fv => fv.RegisterValidatorsFromAssembly(typeof(Exceptions.ValidationException).Assembly));
 
-            services.AddAuthentication()
-                        .AddGoogleAuth(services);
 
             return services;
         }

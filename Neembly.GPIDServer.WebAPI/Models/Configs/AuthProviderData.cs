@@ -2,7 +2,7 @@
 {
     public class AuthProviderData
     {
-        public string ClientId { get; set; }
-        public string ClientSecret { get; set; }
+        public string Client_Id { get; set; }
+        public string Client_Secret { get; set; }
     }
 }

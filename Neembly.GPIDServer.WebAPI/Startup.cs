@@ -72,8 +72,14 @@ namespace Neembly.GPIDServer.WebAPI
             app.UseForwardedHeaders(forwardOptions);
             app.UseIdentityServer();
             app.UseHttpsRedirection();
-            app.UseMvc();
-
+            app.UseCookiePolicy();
+            app.UseAuthentication();
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute(
+                    name: "default",
+                    template: "{controller=Version}/{action=Get}/{id?}");
+            });
             _logger.LogInformation($"{Process.GetCurrentProcess().MainModule.FileName} started {DateTime.Now}");
         }
     }
