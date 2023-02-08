@@ -8,7 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.Persistence;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.WebAPI.Filters;
+using Neembly.GPIDServer.WebAPI.Interface;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
+using Neembly.GPIDServer.WebAPI.Queries;
 using Neembly.GPIDServer.WebAPI.Services;
 
 namespace Neembly.GPIDServer.WebAPI
@@ -61,6 +63,10 @@ namespace Neembly.GPIDServer.WebAPI
             //add cross origin
             services.AddCors();
 
+            // Auth Collection
+            services.AddTransient<IOperatorSSOQueries, OperatorSSOQueries>();
+
+            // add authentications
             services.AddAuthentication()
                     .AddGoogleAuth(services);
 

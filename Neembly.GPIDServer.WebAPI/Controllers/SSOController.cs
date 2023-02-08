@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
+using Neembly.GPIDServer.SharedServices.Interfaces;
 using Neembly.GPIDServer.SharedServices.SSO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
@@ -12,21 +13,20 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     public class SSOController : ControllerBase
     {
         #region Member Variable
+        private readonly ISSOService _ssoService;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
         #endregion
 
         #region Constructor
         public SSOController(
+            ISSOService ssoService,
             UserManager<AppUser> userManager,
-            SignInManager<AppUser> signInManager,
-            RoleManager<IdentityRole> roleManager
-            )
+            SignInManager<AppUser> signInManager            )
         {
+            _ssoService = ssoService;
             _userManager = userManager;
             _signInManager = signInManager;
-            _roleManager = roleManager;
         }
         #endregion
 
@@ -37,7 +37,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public IActionResult Get(int id)
         {
 
-            var userClaims = UserClaimsExtend.GetSSOUserInfo(this.User);
+            var userClaims = _ssoService.GetSSOUserInfo(this.User);
             return Ok(userClaims ?? null); ;
         }
         #endregion

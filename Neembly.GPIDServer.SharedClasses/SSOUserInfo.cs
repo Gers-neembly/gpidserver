@@ -15,5 +15,8 @@
         public string PostalCode { get; set; }
         public string Country { get; set; }
         public string Locale { get; set; }
+        public string Sid { get; set; }
+        public string PrimarySid { get; set; }
+        public string NameIdentifier { get; set; }
     }
 }
