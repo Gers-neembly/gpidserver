@@ -72,6 +72,21 @@ namespace Neembly.GPIDServer.SharedServices.SSO
             var claim = ((ClaimsIdentity)user.Identity).FindFirst(ClaimTypes.Locality);
             return claim == null ? null : claim.Value;
         }
+        public static string GetSid(this IPrincipal user)
+        {
+            var claim = ((ClaimsIdentity)user.Identity).FindFirst(ClaimTypes.Sid);
+            return claim == null ? null : claim.Value;
+        }
+        public static string GetPrimarySid(this IPrincipal user)
+        {
+            var claim = ((ClaimsIdentity)user.Identity).FindFirst(ClaimTypes.PrimarySid);
+            return claim == null ? null : claim.Value;
+        }
+        public static string GetNameId(this IPrincipal user)
+        {
+            var claim = ((ClaimsIdentity)user.Identity).FindFirst(ClaimTypes.NameIdentifier);
+            return claim == null ? null : claim.Value;
+        }
 
         public static SSOUserInfo GetSSOUserInfo(IPrincipal user)
         {
@@ -89,7 +104,10 @@ namespace Neembly.GPIDServer.SharedServices.SSO
                 State = GetStateOrProvince(user),
                 PostalCode = GetPostalCode(user),
                 Country = GetCountry(user),
-                Locale = GetLocale(user)
+                Locale = GetLocale(user),
+                Sid = GetSid(user),
+                PrimarySid = GetPrimarySid(user),
+                NameIdentifier = GetNameId(user)
             };
         }
     }
