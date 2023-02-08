@@ -1,6 +1,8 @@
 ﻿using IdentityServer4.Services;
 using IdentityServer4.Validation;
 using Microsoft.Extensions.DependencyInjection;
+using Neembly.GPIDServer.WebAPI.Interface;
+using Neembly.GPIDServer.WebAPI.Queries;
 using Neembly.GPIDServer.WebAPI.Services;
 using Neembly.GPIDServer.WebAPI.Validator;
 
@@ -20,6 +22,9 @@ namespace Neembly.GPIDServer.WebAPI
             
             //resource owner password validator
             services.AddTransient<IResourceOwnerPasswordValidator, CustomResourceOwnerPasswordValidator>();
+
+            // Auth Collection
+            services.AddTransient<IOperatorSSOQueries, OperatorSSOQueries>();
 
             return services;
         }

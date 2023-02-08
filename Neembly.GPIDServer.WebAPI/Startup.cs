@@ -24,11 +24,11 @@ namespace Neembly.GPIDServer.WebAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //DI for configs
-            DependencyInjectionConfigs.Add(services, Configuration);
-
             //DI for services
             DependencyInjection.Add(services);
+
+            //DI for configs
+            DependencyInjectionConfigs.Add(services, Configuration);
 
             //DI for shared classes
             SharedClasses.DependencyInjection.Add(services, Configuration);
@@ -72,8 +72,14 @@ namespace Neembly.GPIDServer.WebAPI
             app.UseForwardedHeaders(forwardOptions);
             app.UseIdentityServer();
             app.UseHttpsRedirection();
-            app.UseMvc();
-
+            app.UseCookiePolicy();
+            app.UseAuthentication();
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute(
+                    name: "default",
+                    template: "{controller=Version}/{action=Get}/{id?}");
+            });
             _logger.LogInformation($"{Process.GetCurrentProcess().MainModule.FileName} started {DateTime.Now}");
         }
     }
