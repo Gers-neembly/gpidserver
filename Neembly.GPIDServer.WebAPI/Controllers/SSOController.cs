@@ -1,13 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Google;
+﻿using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
+using Neembly.GPIDServer.SharedServices.SSO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -40,9 +36,12 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpGet]
         public IActionResult Get(int id)
         {
-            var userClaims = this.User.Claims;
+
+            var userClaims = UserClaimsExtend.GetSSOUserInfo(this.User);
             return Ok(userClaims ?? null); ;
         }
         #endregion
+
     }
+
 }
