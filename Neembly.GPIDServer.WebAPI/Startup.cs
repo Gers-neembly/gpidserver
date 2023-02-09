@@ -38,6 +38,7 @@ namespace Neembly.GPIDServer.WebAPI
 
             //DI for persistence
             Persistence.DependencyInjection.Add(services);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

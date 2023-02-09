@@ -22,6 +22,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.ClientId = p.Client_Id;
                     options.ClientSecret = p.Client_Secret;
+                    options.SaveTokens = true;
                 });
             });
 
