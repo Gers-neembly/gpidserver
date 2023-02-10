@@ -53,8 +53,6 @@ namespace Neembly.GPIDServer.WebAPI
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
-
             //// global cors policy
             app.UseCors(x => x
                 .AllowAnyOrigin()
@@ -75,6 +73,8 @@ namespace Neembly.GPIDServer.WebAPI
 
             app.UseForwardedHeaders(forwardOptions);
             app.UseIdentityServer();
+            app.UseHttpsRedirection();
+            app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseMvc();
             _logger.LogInformation($"{Process.GetCurrentProcess().MainModule.FileName} started {DateTime.Now}");
