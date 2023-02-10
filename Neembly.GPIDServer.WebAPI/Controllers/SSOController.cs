@@ -32,6 +32,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Actions
+        [DisableCors]
         [Authorize(AuthenticationSchemes = GoogleDefaults.AuthenticationScheme)]
         [Route("login-google")]
         [HttpGet]
