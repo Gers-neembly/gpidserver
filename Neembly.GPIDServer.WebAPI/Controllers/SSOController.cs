@@ -23,7 +23,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public SSOController(
             ISSOService ssoService,
             UserManager<AppUser> userManager,
-            SignInManager<AppUser> signInManager            )
+            SignInManager<AppUser> signInManager)
         {
             _ssoService = ssoService;
             _userManager = userManager;
@@ -32,6 +32,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Actions
+        [EnableCors]
         [Authorize(AuthenticationSchemes = GoogleDefaults.AuthenticationScheme)]
         [Route("login-google")]
         [HttpGet]
