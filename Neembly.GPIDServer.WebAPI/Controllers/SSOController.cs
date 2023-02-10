@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.SharedServices.Interfaces;
-using Neembly.GPIDServer.SharedServices.SSO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -32,8 +31,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Actions
-        [EnableCors]
         [Authorize(AuthenticationSchemes = GoogleDefaults.AuthenticationScheme)]
+        [EnableCors("AllowOrigin")]
         [Route("login-google")]
         [HttpGet]
         public IActionResult Get(int id)

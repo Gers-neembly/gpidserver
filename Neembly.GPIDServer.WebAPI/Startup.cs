@@ -58,7 +58,6 @@ namespace Neembly.GPIDServer.WebAPI
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .SetIsOriginAllowed((host) => true)
                 .AllowCredentials());
 
 
