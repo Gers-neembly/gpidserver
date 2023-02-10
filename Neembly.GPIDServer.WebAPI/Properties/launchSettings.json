@@ -24,7 +24,7 @@
       "launchUrl": "api/version",
       "environmentVariables": {
         "ASPNETCORE_CLUSTER": "None",
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Local"
       },
       "applicationUrl": "https://localhost:7001;http://localhost:7000"
     }
