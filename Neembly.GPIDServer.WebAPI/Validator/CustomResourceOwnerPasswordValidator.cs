@@ -6,6 +6,7 @@ using Neembly.GPIDServer.Persistence.Entities;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static Neembly.GPIDServer.SharedServices.SSO.Enum;
 
 namespace Neembly.GPIDServer.WebAPI.Validator
 {
@@ -29,6 +30,7 @@ namespace Neembly.GPIDServer.WebAPI.Validator
         {
             string operatorId = context.Request.Raw["operatorId"];
             string email = context.Request.Raw["email"];
+            string socialMediaLogin = context.Request.Raw["ssoLogin"];
             string userName = $"{context.UserName}_{operatorId}";
             AppUser user = null;
             if (string.IsNullOrEmpty(email))
@@ -38,6 +40,10 @@ namespace Neembly.GPIDServer.WebAPI.Validator
                                             && p.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
             if (user != null)
             {
+                var enteredPassword = context.Password;
+                if (!string.IsNullOrEmpty(socialMediaLogin))
+                    if (Enum.IsDefined(typeof(SSO), socialMediaLogin))
+                        enteredPassword = $"{user.UserName}{operatorId}";
                 bool passwordOk = _userManager.CheckPasswordAsync(user, context.Password).GetAwaiter().GetResult();
                 if (passwordOk)
                 {
