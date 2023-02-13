@@ -36,6 +36,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetLogin(int id)
         {
+            string urlReferer = HttpContext.Request.Headers["Referer"].ToString();
             var userClaims = _ssoService.GetSSOUserInfo(this.User);
             return Ok(userClaims ?? null); ;
         }
