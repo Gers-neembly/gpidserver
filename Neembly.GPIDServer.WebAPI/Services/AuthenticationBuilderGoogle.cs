@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.WebAPI.Interface;
-using System.Linq;
 
 namespace Neembly.GPIDServer.WebAPI.Services
 {
