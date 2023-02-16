@@ -1,11 +1,21 @@
-﻿namespace Neembly.GPIDServer.SharedServices.SSO
+﻿using System.ComponentModel;
+
+namespace Neembly.GPIDServer.SharedServices.SSO
 {
     public class Enum
     {
         public enum SSO
         {
-            google,
-            facebook,
+            [Description("AuthGoogleSSO")]
+            Google,
+            [Description("AuthFacebookSSO")]
+            Facebook,
+        }
+        public enum TokenType
+        {
+            None, 
+            Bearer,
+            Header
         }
     }
 }

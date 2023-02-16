@@ -19,6 +19,7 @@ namespace Neembly.GPIDServer.SharedServices
 
             //SSO 
             services.AddScoped<ISSOClaimsService, SSOClaimsService>();
+            services.AddScoped<ISSOPlayerService, SSOPlayerService>();
 
             //token provider
             services.AddScoped<ITokenProviderService, TokenProviderService>();
