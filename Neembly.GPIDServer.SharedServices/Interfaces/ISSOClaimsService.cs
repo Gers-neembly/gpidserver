@@ -3,8 +3,9 @@ using System.Security.Principal;
 
 namespace Neembly.GPIDServer.SharedServices.Interfaces
 {
-    public interface ISSOService
+    public interface ISSOClaimsService
     {
         SSOUserInfo GetSSOUserInfo(IPrincipal user);
+        string GenerateUsername(IPrincipal user);
     }
 }

@@ -60,6 +60,12 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             return (resultPlayerId);
         }
 
+        public async Task<AppUser> GetAppUserOnOperator(string email, int operatorId)
+        {
+            return await _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
+                                             && r.OperatorId == operatorId).FirstOrDefaultAsync();
+        }
+
         public AppUser GetAppUser(string email, string username)
         {
             return _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()

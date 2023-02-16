@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.WebAPI.Interface;
-using System.Linq;
 
 namespace Neembly.GPIDServer.WebAPI.Services
 {
@@ -14,17 +13,18 @@ namespace Neembly.GPIDServer.WebAPI.Services
             // create IThirdPartyProvidersProvider realization with GetByProviderCode method
             var authThirdPartyProvidersProvider = serviceProvider.GetService<IOperatorSSOQueries>();
             var googleProviders = authThirdPartyProvidersProvider.GetperatorSSOByProvider("google");
-
-            googleProviders.ForEach(p =>
+            if (googleProviders != null)
             {
-                authenticationBuilder = authenticationBuilder.AddGoogle(options =>
+                googleProviders.ForEach(p =>
                 {
-                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
-                    options.ClientId = p.Client_Id;
-                    options.ClientSecret = p.Client_Secret;
+                    authenticationBuilder = authenticationBuilder.AddGoogle(options =>
+                    {
+                        options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                        options.ClientId = p.Client_Id;
+                        options.ClientSecret = p.Client_Secret;
+                    });
                 });
-            });
-
+            }
             return authenticationBuilder;
         }
     }

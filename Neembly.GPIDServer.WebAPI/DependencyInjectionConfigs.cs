@@ -60,10 +60,7 @@ namespace Neembly.GPIDServer.WebAPI
             });
 
             //add cross origin
-            services.AddCors(c =>
-            {
-                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
-            });
+            services.AddCors();
 
             // Auth Collection
             services.AddTransient<IOperatorSSOQueries, OperatorSSOQueries>();
