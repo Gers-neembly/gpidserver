@@ -59,7 +59,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var tokenKey = await _tokenProviderService.CreateToken();
 
             var userClaimInfo = _ssoClaimsService.GetSSOUserInfo(this.User);
-            string displayUserName = _ssoClaimsService.GenerateUsername(this.User);
+            //string displayUserName = _ssoClaimsService.GenerateUsername(this.User);
+            string displayUserName = userClaimInfo.Email;
 
             var emailAppUser = await _dataAccess.GetAppUserOnOperator(userClaimInfo.Email, operatorId);
             if (emailAppUser != null)
