@@ -50,12 +50,14 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [Authorize(AuthenticationSchemes = GoogleDefaults.AuthenticationScheme)]
         [Route("{operatorId}/login-google")]
         [HttpGet]
-        public async Task<IActionResult> Get(int operatorId)
+        public async Task<IActionResult> Get(int operatorId, string returnUrl)
         {
             bool canLogin = false;
             AppUser user = null;
             int playerId = 0;
             string urlReferer = Request.Headers["Referer"].ToString();
+            if (urlReferer.ToLower().Contains("google")) urlReferer = $"https://{returnUrl}/";
+
             var tokenKey = await _tokenProviderService.CreateToken();
 
             var userClaimInfo = _ssoClaimsService.GetSSOUserInfo(this.User);
