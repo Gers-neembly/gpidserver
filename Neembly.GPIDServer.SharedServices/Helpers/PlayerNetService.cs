@@ -1,4 +1,5 @@
 ﻿using IdentityServer4;
+using Microsoft.Extensions.Logging;
 using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
 using Newtonsoft.Json;
@@ -15,12 +16,15 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
     {
         #region Member Variables
         private readonly IdentityServerTools _identityServerTools;
+        private readonly ILogger _logger;
         #endregion
 
         #region Constructor
-        public PlayerNetService(IdentityServerTools identityServerTools)
+        public PlayerNetService(IdentityServerTools identityServerTools,
+                                ILoggerFactory loggerFactory)
         {
             _identityServerTools = identityServerTools;
+            _logger = loggerFactory.CreateLogger<PlayerNetService>();
         }
         #endregion
 
@@ -49,6 +53,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             }
             catch (Exception ex)
             {
+                _logger.LogError("Exception PlayerNetService.PlayerRegister", ex);
                 return false;
             }
         }
@@ -77,6 +82,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             }
             catch(Exception ex)
             {
+                _logger.LogError("Exception PlayerNetService.PlayerSSORegister", ex);
                 return false;
             }
         }

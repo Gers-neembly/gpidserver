@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
@@ -18,7 +19,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     [ApiController]
     public class SSOController : ControllerBase
     {
-        const string ssoReturnPath = "sso/google";
+        const string ssoReturnPath = "sso/";
         #region Member Variable
         private readonly IDataAccess _dataAccess;
         private readonly ITokenProviderService _tokenProviderService;
@@ -47,78 +48,108 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Actions
+
+        #region Google Login Authentication
         [Authorize(AuthenticationSchemes = GoogleDefaults.AuthenticationScheme)]
         [Route("{operatorId}/login-google")]
         [HttpGet]
-        public async Task<IActionResult> Get(int operatorId, string returnUrl)
+        public async Task<IActionResult> LoginGoogle(int operatorId, string returnUrl)
         {
+            var authProvider = "google";
+            var authProviderClaim = "authGoogleSSO";
             bool canLogin = false;
-            AppUser user = null;
             int playerId = 0;
             string urlReferer = Request.Headers["Referer"].ToString();
-            if (urlReferer.ToLower().Contains("google")) urlReferer = $"https://{returnUrl}/";
-
+            if (urlReferer.ToLower().Contains(authProvider)) urlReferer = $"https://{returnUrl}/";
             var tokenKey = await _tokenProviderService.CreateToken();
 
             var userClaimInfo = _ssoClaimsService.GetSSOUserInfo(this.User);
-            //string displayUserName = _ssoClaimsService.GenerateUsername(this.User);
             string displayUserName = userClaimInfo.Email;
+            //string displayUserName = _ssoClaimsService.GenerateUsername(this.User); // this might come handy if needed
 
             var emailAppUser = await _dataAccess.GetAppUserOnOperator(userClaimInfo.Email, operatorId);
             if (emailAppUser != null)
             {
                 displayUserName = emailAppUser.DisplayUsername;
-                var emailAppUserClaims = await _userManager.GetClaimsAsync(emailAppUser);
                 playerId = emailAppUser.PlayerId;
-                var test = emailAppUserClaims.Where(e => e.Type == "authGoogleSSO").Select(e => e.Value).FirstOrDefault();
-                if (test == null)
-                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("authGoogleSSO", "true"));
-                canLogin = true;
+                canLogin = await _ssoPlayerService.ProcessUserSSOClaim(authProviderClaim, emailAppUser);
             }
             else
             {
                 playerId = await _dataAccess.GeneratePlayerId(displayUserName, userClaimInfo.Email, operatorId);
-                var registerInfo = new SSORegisterInfo {
-                    PlayerId = playerId,
-                    Username = displayUserName,
-                    OperatorId = operatorId,
-                    AuthProvider = SSO.Google.ToString()
-                };
-                var registerResult = await _ssoPlayerService.RegisterPlayer(registerInfo, userClaimInfo);
-                if (registerResult)
+                var ssoRegisterInfo = new SSOPlayerRegisterInfo
                 {
-                    user = new AppUser
-                    {
-                        UserName = $"{displayUserName}_{operatorId}",
-                        Email = userClaimInfo.Email,
-                        DisplayUsername = displayUserName,
-                        PlayerId = playerId,
-                        OperatorId = operatorId,
-                        RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Registered)
-                    };
-                    var result = await _userManager.CreateAsync(user, $"{user.UserName}{operatorId}");
-                    if (result.Succeeded)
-                    {
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", operatorId.ToString()));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", playerId.ToString()));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("authGoogleSSO", "true"));
-                        canLogin = true;
-
-                    }
-                }
+                    Username = displayUserName,
+                    Email = userClaimInfo.Email,
+                    PlayerId = playerId,
+                    OperatorId = operatorId,
+                    AuthProvider = authProvider,
+                    AuthProviderClaim = authProviderClaim,
+                    UserClaimInfo = userClaimInfo
+                };
+                canLogin = await _ssoPlayerService.CreateUserFromSSO(ssoRegisterInfo);
             }
             if (canLogin)
             {
-                var redirectAddress = $"{urlReferer}{ssoReturnPath}?tokenkey={tokenKey}&username={displayUserName}&playerId={playerId}";
+                var redirectAddress = $"{urlReferer}{ssoReturnPath}{authProvider}?tokenkey={tokenKey}&username={displayUserName}&playerId={playerId}";
                 var url = UriHelper.Encode(new Uri(UriHelper.Encode(new Uri(redirectAddress))));
                 return Redirect(url);
             }
             else
-                return Redirect($"{urlReferer}{ssoReturnPath}?tokenkey={tokenKey}&action=failed");
+                return Redirect($"{urlReferer}{ssoReturnPath}{authProvider}?tokenkey={tokenKey}&action=failed");
         }
+        #endregion
+
+        #region Facebook Login Authentication
+        [Authorize(AuthenticationSchemes = FacebookDefaults.AuthenticationScheme)]
+        [Route("{operatorId}/login-facebook")]
+        [HttpGet]
+        public async Task<IActionResult> LoginFacebook(int operatorId, string returnUrl)
+        {
+            var authProvider = "facebook";
+            var authProviderClaim = "authFacebookSSO";
+            bool canLogin = false;
+            int playerId = 0;
+            string urlReferer = Request.Headers["Referer"].ToString();
+            if (urlReferer.ToLower().Contains(authProvider)) urlReferer = $"https://{returnUrl}/";
+            var tokenKey = await _tokenProviderService.CreateToken();
+
+            var userClaimInfo = _ssoClaimsService.GetSSOUserInfo(this.User);
+            string displayUserName = userClaimInfo.Email;
+            //string displayUserName = _ssoClaimsService.GenerateUsername(this.User); // this might come handy if needed
+
+            var emailAppUser = await _dataAccess.GetAppUserOnOperator(userClaimInfo.Email, operatorId);
+            if (emailAppUser != null)
+            {
+                displayUserName = emailAppUser.DisplayUsername;
+                playerId = emailAppUser.PlayerId;
+                canLogin = await _ssoPlayerService.ProcessUserSSOClaim(authProviderClaim, emailAppUser);
+            }
+            else
+            {
+                playerId = await _dataAccess.GeneratePlayerId(displayUserName, userClaimInfo.Email, operatorId);
+                var ssoRegisterInfo = new SSOPlayerRegisterInfo
+                {
+                    Username = displayUserName,
+                    Email = userClaimInfo.Email,
+                    PlayerId = playerId,
+                    OperatorId = operatorId,
+                    AuthProvider = authProvider,
+                    AuthProviderClaim = authProviderClaim,
+                    UserClaimInfo = userClaimInfo
+                };
+                canLogin = await _ssoPlayerService.CreateUserFromSSO(ssoRegisterInfo);
+            }
+            if (canLogin)
+            {
+                var redirectAddress = $"{urlReferer}{ssoReturnPath}{authProvider}?tokenkey={tokenKey}&username={displayUserName}&playerId={playerId}";
+                var url = UriHelper.Encode(new Uri(UriHelper.Encode(new Uri(redirectAddress))));
+                return Redirect(url);
+            }
+            else
+                return Redirect($"{urlReferer}{ssoReturnPath}{authProvider}?tokenkey={tokenKey}&action=failed");
+        }
+        #endregion
 
         #endregion
 
