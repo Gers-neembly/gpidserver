@@ -45,7 +45,7 @@ namespace Neembly.GPIDServer.WebAPI.Validator
                     passwordOk = _userManager.CheckPasswordAsync(user, context.Password).GetAwaiter().GetResult();
                 else
                 {
-                    if (Enum.IsDefined(typeof(SSO), ssoAuthProvider))
+                    if (Enum.IsDefined(typeof(SSO), ssoAuthProvider.ToLower()))
                     {
                         var emailAppUserClaims = _userManager.GetClaimsAsync(user).GetAwaiter().GetResult();
                         var test = emailAppUserClaims.Where(e => e.Type == $"auth{ssoAuthProvider}SSO").Select(e => e.Value).FirstOrDefault();
