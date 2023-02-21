@@ -4,6 +4,7 @@ using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
+using static Neembly.GPIDServer.SharedServices.SSO.Enum;
 
 namespace Neembly.GPIDServer.WebAPI.Queries
 {
@@ -21,15 +22,32 @@ namespace Neembly.GPIDServer.WebAPI.Queries
         #endregion
 
 
-        public List<GoogleAuthProviderData> GetperatorSSOByProvider(string authProvider)
+        #region Get Google Operator SSO
+        public List<GoogleAuthProviderData> GetGoogleOperatorSSO()
         {
+            var authProvider = SSO.google.ToString();
             var operatorSSOItems =  _context.OperatorSSO
                     .Where(a => a.AuthProvider == authProvider && a.IsEnabled)
                     .Select(a => a.Parameters);
-            var googleAuthData = new List<GoogleAuthProviderData>();
+            var AuthData = new List<GoogleAuthProviderData>();
             foreach (var ssoItem in operatorSSOItems)
-                googleAuthData.Add(JsonConvert.DeserializeObject<GoogleAuthProviderData>(ssoItem));
-            return googleAuthData;
+                AuthData.Add(JsonConvert.DeserializeObject<GoogleAuthProviderData>(ssoItem));
+            return AuthData;
         }
+        #endregion
+
+        #region Get Facebook Operator SSO
+        public List<FacebookAuthProviderData> GetFacebookOperatorSSO()
+        {
+            var authProvider = SSO.facebook.ToString();
+            var operatorSSOItems = _context.OperatorSSO
+                    .Where(a => a.AuthProvider == authProvider && a.IsEnabled)
+                    .Select(a => a.Parameters);
+            var AuthData = new List<FacebookAuthProviderData>();
+            foreach (var ssoItem in operatorSSOItems)
+                AuthData.Add(JsonConvert.DeserializeObject<FacebookAuthProviderData>(ssoItem));
+            return AuthData;
+        }
+        #endregion
     }
 }

@@ -7,9 +7,9 @@ namespace Neembly.GPIDServer.SharedServices.SSO
         public enum SSO
         {
             [Description("AuthGoogleSSO")]
-            Google,
+            google,
             [Description("AuthFacebookSSO")]
-            Facebook,
+            facebook,
         }
         public enum TokenType
         {

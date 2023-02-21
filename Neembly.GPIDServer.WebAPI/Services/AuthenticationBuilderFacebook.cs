@@ -13,16 +13,16 @@ namespace Neembly.GPIDServer.WebAPI.Services
           var serviceProvider = services.BuildServiceProvider();
             // create IThirdPartyProvidersProvider realization with GetByProviderCode method
             var authThirdPartyProvidersProvider = serviceProvider.GetService<IOperatorSSOQueries>();
-            var googleProviders = authThirdPartyProvidersProvider.GetperatorSSOByProvider("facebook");
-            if (googleProviders != null)
+            var facebookProviders = authThirdPartyProvidersProvider.GetFacebookOperatorSSO();
+            if (facebookProviders != null)
             {
-                googleProviders.ForEach(p =>
+                facebookProviders.ForEach(p =>
                 {
                     authenticationBuilder = authenticationBuilder.AddFacebook(options =>
                     {
                         options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
-                        options.ClientId = p.Client_Id;
-                        options.ClientSecret = p.Client_Secret;
+                        options.ClientId = p.App_Id;
+                        options.ClientSecret = p.App_Secret;
                     });
                 });
             }

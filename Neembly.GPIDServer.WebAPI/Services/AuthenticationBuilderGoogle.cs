@@ -12,7 +12,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
           var serviceProvider = services.BuildServiceProvider();
             // create IThirdPartyProvidersProvider realization with GetByProviderCode method
             var authThirdPartyProvidersProvider = serviceProvider.GetService<IOperatorSSOQueries>();
-            var googleProviders = authThirdPartyProvidersProvider.GetperatorSSOByProvider("google");
+            var googleProviders = authThirdPartyProvidersProvider.GetGoogleOperatorSSO();
             if (googleProviders != null)
             {
                 googleProviders.ForEach(p =>
