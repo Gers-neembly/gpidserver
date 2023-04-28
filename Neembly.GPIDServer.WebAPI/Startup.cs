@@ -38,6 +38,7 @@ namespace Neembly.GPIDServer.WebAPI
 
             //DI for persistence
             Persistence.DependencyInjection.Add(services);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -72,8 +73,9 @@ namespace Neembly.GPIDServer.WebAPI
             app.UseForwardedHeaders(forwardOptions);
             app.UseIdentityServer();
             app.UseHttpsRedirection();
+            app.UseCookiePolicy();
+            app.UseAuthentication();
             app.UseMvc();
-
             _logger.LogInformation($"{Process.GetCurrentProcess().MainModule.FileName} started {DateTime.Now}");
         }
     }
