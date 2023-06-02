@@ -40,6 +40,12 @@ namespace Neembly.GPIDServer.WebAPI
                 .AddEntityFrameworkStores<AppDBContext>()
                 .AddDefaultTokenProviders();
 
+            services.ConfigureApplicationCookie(config =>
+            {
+                config.Cookie.Name = "Winka.Indentity.Cookie";
+                config.LoginPath = "/Auth/Login";
+            });
+
             //authentication client config
             var authClientConfig = new AuthClientConfiguration();
             configuration.Bind("AuthClientConfiguration", authClientConfig);
