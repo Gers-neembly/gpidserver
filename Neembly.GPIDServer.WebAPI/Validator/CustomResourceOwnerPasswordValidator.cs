@@ -14,15 +14,18 @@ namespace Neembly.GPIDServer.WebAPI.Validator
     {
         #region Member Variable
         private readonly AppDBContext _context;
+        private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
         #endregion
 
         public CustomResourceOwnerPasswordValidator(
             AppDBContext context,
-             UserManager<AppUser> userManager
+            SignInManager<AppUser> signInManager,
+            UserManager<AppUser> userManager
             )
         {
             _context = context;
+            _signInManager = signInManager;
             _userManager = userManager;
         }
 
@@ -54,6 +57,7 @@ namespace Neembly.GPIDServer.WebAPI.Validator
                 }
                 if (passwordOk)
                 {
+                    _signInManager.SignInAsync(user, false);
                     context.Result = new GrantValidationResult(user.Id, "password", null, "local", null);
                     return Task.FromResult(context.Result);
                 }

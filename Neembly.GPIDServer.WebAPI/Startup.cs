@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
@@ -71,11 +72,11 @@ namespace Neembly.GPIDServer.WebAPI
             forwardOptions.KnownProxies.Clear();
 
             app.UseForwardedHeaders(forwardOptions);
+            app.UseStaticFiles();
             app.UseIdentityServer();
             app.UseHttpsRedirection();
-            app.UseCookiePolicy();
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseMvcWithDefaultRoute();
             _logger.LogInformation($"{Process.GetCurrentProcess().MainModule.FileName} started {DateTime.Now}");
         }
     }

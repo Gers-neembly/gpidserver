@@ -16,6 +16,11 @@ namespace Neembly.GPIDServer.WebAPI
                 new IdentityResources.OpenId(),
                 new IdentityResources.Email(),
                 new IdentityResources.Profile(),
+                new IdentityResource
+                {
+                    Name = "role",
+                    UserClaims = new List<string> {"role"}
+                }
             };
         }
 
@@ -81,7 +86,7 @@ namespace Neembly.GPIDServer.WebAPI
                             }
                         );
                     }
-                    if (authClientItem.Type.Equals(GlobalConstants.AuthTypeClientCredentials, StringComparison.InvariantCultureIgnoreCase))
+                    else if (authClientItem.Type.Equals(GlobalConstants.AuthTypeClientCredentials, StringComparison.InvariantCultureIgnoreCase))
                     {
                         result.Add(
                             new Client
@@ -89,8 +94,29 @@ namespace Neembly.GPIDServer.WebAPI
                                 ClientId = authClientItem.ClientId,
                                 AllowedGrantTypes = GrantTypes.ClientCredentials,
                                 ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
-                                AllowedScopes = {authClientItem.ApiScope},
+                                AllowedScopes = { authClientItem.ApiScope },
                                 AccessTokenLifetime = authClientItem.LifeTime
+                            }
+                        );
+                    }
+                    else if (authClientItem.Type.Equals(GlobalConstants.AuthTypeGrantCode, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        result.Add(
+                            new Client
+                            {
+                                ClientId = authClientItem.ClientId,
+                                AllowedGrantTypes = new List<string> { "authorization_code" },
+                                ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
+                                AllowedScopes = {
+                                    IdentityServerConstants.StandardScopes.OpenId,
+                                    IdentityServerConstants.StandardScopes.Profile,
+                                    IdentityServerConstants.StandardScopes.Email,
+                                    authClientItem.ApiScope
+                                },
+                                RedirectUris = authClientItem.Redirect_Uri,
+                                AccessTokenType = AccessTokenType.Jwt,
+                                Enabled = true,
+                                RequireConsent = false
                             }
                         );
                     }
