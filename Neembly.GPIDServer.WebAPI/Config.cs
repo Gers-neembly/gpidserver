@@ -86,7 +86,7 @@ namespace Neembly.GPIDServer.WebAPI
                             }
                         );
                     }
-                    if (authClientItem.Type.Equals(GlobalConstants.AuthTypeClientCredentials, StringComparison.InvariantCultureIgnoreCase))
+                    else if (authClientItem.Type.Equals(GlobalConstants.AuthTypeClientCredentials, StringComparison.InvariantCultureIgnoreCase))
                     {
                         result.Add(
                             new Client
@@ -99,7 +99,7 @@ namespace Neembly.GPIDServer.WebAPI
                             }
                         );
                     }
-                    if (authClientItem.Type.Equals(GlobalConstants.AuthTypeGrantCode, StringComparison.InvariantCultureIgnoreCase))
+                    else if (authClientItem.Type.Equals(GlobalConstants.AuthTypeGrantCode, StringComparison.InvariantCultureIgnoreCase))
                     {
                         result.Add(
                             new Client
@@ -113,7 +113,7 @@ namespace Neembly.GPIDServer.WebAPI
                                     IdentityServerConstants.StandardScopes.Email,
                                     authClientItem.ApiScope
                                 },
-                                RedirectUris = new List<string> { "https://localhost:8777/signin-oidc" },
+                                RedirectUris = authClientItem.Redirect_Uri,
                                 AccessTokenType = AccessTokenType.Jwt,
                                 Enabled = true,
                                 RequireConsent = false
@@ -121,25 +121,6 @@ namespace Neembly.GPIDServer.WebAPI
                         );
                     }
                 }
-    //            result.Add(
-    //new Client
-    //{
-    //    ClientId = "pkce_client",
-    //    ClientSecrets = { new Secret("secret".Sha256()) },
-    //    AllowedGrantTypes = new List<string> { "authorization_code" },
-    //    RedirectUris = new List<string> { "https://bitcoingame-dev.neembly.io/login" },
-    //    PostLogoutRedirectUris = new List<string> { "https://bitcoingame-dev.neembly.io/logout" },
-    //    AllowedScopes = new List<string>
-    //    {
-    //        "openid",
-    //        "profile",
-    //        "api1"
-    //    },
-    //    AccessTokenType = AccessTokenType.Jwt,
-    //    Enabled = true,
-    //    RequireConsent = true,
-    //    AllowRememberConsent = false,
-    //});
             }
             return result;
         }
