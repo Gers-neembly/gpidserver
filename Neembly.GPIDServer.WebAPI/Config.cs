@@ -116,6 +116,7 @@ namespace Neembly.GPIDServer.WebAPI
                                 RedirectUris = authClientItem.Redirect_Uri,
                                 AccessTokenType = AccessTokenType.Jwt,
                                 Enabled = true,
+                                AlwaysIncludeUserClaimsInIdToken = true,
                                 RequireConsent = false
                             }
                         );
