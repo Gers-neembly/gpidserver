@@ -25,10 +25,12 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             var queryString = HttpContext.Request.Query["returnUrl"].ToString();
             var oAuthSignIn = HttpUtility.ParseQueryString(queryString).Get("oAuthSignIn");
+            var redirect_uri = HttpUtility.ParseQueryString(queryString).Get("redirect_uri");
             if (!string.IsNullOrEmpty(oAuthSignIn))
             {
                 if (await this.ValidateSignInCredentials(oAuthSignIn))
-                    return Redirect(returnUrl);
+                    //return Redirect(redirect_uri);
+                    return View();
             }
             return Unauthorized();
         }
