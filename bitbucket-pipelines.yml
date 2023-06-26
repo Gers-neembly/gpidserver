@@ -41,6 +41,29 @@ pipelines:
           - echo "Updating DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
           - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR builddate.txt
+    deploy-dev-scp:
+    - step:
+        name: Deploy to DEV-test
+        deployment: test
+        caches:
+          - dotnetcore
+        script:
+          - echo "Manual deploy to DEV-test environment"
+          - export ASPNETCORE_ENVIRONMENT="Development"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Debug
+          - dotnet publish $PROJECT_NAME --configuration Debug
+          - echo "Uploading to Server"
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
+          - sleep 10
+          - echo "Updating Database"
+          - cd $DB_PROJECT_DIR
+          - dotnet ef database update
     deploy-sb-ws:
     - variables:
       - name: ServerId
