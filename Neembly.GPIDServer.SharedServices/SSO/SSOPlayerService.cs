@@ -70,7 +70,7 @@ namespace Neembly.GPIDServer.SharedServices.SSO
                 City = ssoUserInfo.State,
                 ZipCode = ssoUserInfo.PostalCode,
                 Country = ssoUserInfo.Country,
-                CountryCode = this.GetCountryISOCode(ssoUserInfo.Country) ?? ssoUserInfo.Country,
+                CountryCode = ssoUserInfo.Country != null ? this.GetCountryISOCode(ssoUserInfo.Country) : null
             };
         }
         #endregion
