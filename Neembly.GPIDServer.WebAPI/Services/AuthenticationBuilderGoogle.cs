@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.WebAPI.Interface;
+using System.Threading.Tasks;
 
 namespace Neembly.GPIDServer.WebAPI.Services
 {
@@ -22,6 +23,11 @@ namespace Neembly.GPIDServer.WebAPI.Services
                         options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                         options.ClientId = p.Client_Id;
                         options.ClientSecret = p.Client_Secret;
+                        options.Events.OnRedirectToAuthorizationEndpoint = context =>
+                        {
+                            context.Response.Redirect(context.RedirectUri + "&prompt=select_account"); //also, &prompt=select_account
+                            return Task.CompletedTask;
+                        };
                     });
                 });
             }
