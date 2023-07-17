@@ -25,7 +25,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
                         options.ClientSecret = p.Client_Secret;
                         options.Events.OnRedirectToAuthorizationEndpoint = context =>
                         {
-                            context.Response.Redirect(context.RedirectUri + "&prompt=select_account"); //also, &prompt=select_account
+                            context.Response.Redirect(context.RedirectUri + "&prompt=consent"); //also, &prompt=select_account
                             return Task.CompletedTask;
                         };
                     });
