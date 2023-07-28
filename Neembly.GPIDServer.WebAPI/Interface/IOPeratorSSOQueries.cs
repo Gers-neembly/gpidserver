@@ -5,7 +5,7 @@ namespace Neembly.GPIDServer.WebAPI.Interface
 {
     public interface IOperatorSSOQueries
     {
-        List<GoogleAuthProviderData> GetGoogleOperatorSSO();
-        List<FacebookAuthProviderData> GetFacebookOperatorSSO();
+        GoogleAuthProviderData GetGoogleOperatorSSO(string socialAccountName);
+        FacebookAuthProviderData GetFacebookOperatorSSO(string socialAccountName);
     }
 }

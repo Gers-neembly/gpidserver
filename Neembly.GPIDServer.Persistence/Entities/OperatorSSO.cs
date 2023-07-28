@@ -20,5 +20,7 @@ namespace Neembly.GPIDServer.Persistence.Entities
         public bool AutoRegister { get; set; } = true;
         [StringLength(1028)]
         public string Description { get; set; }
+        [StringLength(30)]
+        public string SocialAccountName { get; set; }
     }
 }
