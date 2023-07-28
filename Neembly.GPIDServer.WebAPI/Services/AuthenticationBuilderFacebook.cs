@@ -8,7 +8,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
 {
     public static class AuthenticationBuilderFacebook
     {
-        public static AuthenticationBuilder AddFacebookAuth(this AuthenticationBuilder authenticationBuilder, IServiceCollection services, string socialAccountName = "betenjoy")
+        public static AuthenticationBuilder AddFacebookAuth(this AuthenticationBuilder authenticationBuilder, IServiceCollection services, string socialAccountName)
         {
           var serviceProvider = services.BuildServiceProvider();
             // create IThirdPartyProvidersProvider realization with GetByProviderCode method

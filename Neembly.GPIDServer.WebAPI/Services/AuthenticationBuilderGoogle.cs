@@ -9,7 +9,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
 {
     public static class AuthenticationBuilderGoogleAdder
     {
-        public static AuthenticationBuilder AddGoogleAuth(this AuthenticationBuilder authenticationBuilder, IServiceCollection services, string socialAccountName = "betenjoy")
+        public static AuthenticationBuilder AddGoogleAuth(this AuthenticationBuilder authenticationBuilder, IServiceCollection services, string socialAccountName)
         {
           var serviceProvider = services.BuildServiceProvider();
             // create IThirdPartyProvidersProvider realization with GetByProviderCode method
