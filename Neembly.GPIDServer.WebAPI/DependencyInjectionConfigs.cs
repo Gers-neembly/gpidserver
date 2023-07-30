@@ -27,7 +27,8 @@ namespace Neembly.GPIDServer.WebAPI
             var paramList = Environment.GetCommandLineArgs();
 
             int offset = Array.FindIndex(paramList, m => m == "--webname");
-            var webname = paramList[offset + 1];
+            string webname = string.Empty;
+            if (offset >= 0) webname = paramList[offset + 1];
 
             Console.WriteLine($"Loading Webname : {webname}");
             //application database context

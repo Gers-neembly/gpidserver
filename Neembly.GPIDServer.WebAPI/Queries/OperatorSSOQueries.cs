@@ -12,7 +12,6 @@ namespace Neembly.GPIDServer.WebAPI.Queries
     {
         #region Member Variables
         private AppDBContext _context;
-        const string defaultSocialAccountName = "betenjoy";
         #endregion
 
         #region Constructor
@@ -24,8 +23,9 @@ namespace Neembly.GPIDServer.WebAPI.Queries
 
 
         #region Get Google Operator SSO
-        public GoogleAuthProviderData GetGoogleOperatorSSO(string socialAccountName = defaultSocialAccountName)
+        public GoogleAuthProviderData GetGoogleOperatorSSO(string socialAccountName)
         {
+            if (string.IsNullOrEmpty(socialAccountName)) return null;
             var authProvider = SSO.google.ToString();
             var operatorSSOItems =  _context.OperatorSSO
                     .Where(a => a.AuthProvider == authProvider && a.IsEnabled && a.SocialAccountName == socialAccountName)
@@ -35,8 +35,9 @@ namespace Neembly.GPIDServer.WebAPI.Queries
         #endregion
 
         #region Get Facebook Operator SSO
-        public FacebookAuthProviderData GetFacebookOperatorSSO(string socialAccountName = defaultSocialAccountName)
+        public FacebookAuthProviderData GetFacebookOperatorSSO(string socialAccountName)
         {
+            if (string.IsNullOrEmpty(socialAccountName)) return null;
             var authProvider = SSO.facebook.ToString();
             var operatorSSOItems = _context.OperatorSSO
                     .Where(a => a.AuthProvider == authProvider && a.IsEnabled && a.SocialAccountName == socialAccountName)
