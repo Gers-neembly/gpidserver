@@ -30,12 +30,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (!string.IsNullOrEmpty(oAuthSignIn))
             {
                 if (await this.ValidateSignInCredentials(oAuthSignIn))
-                {
-                    Console.WriteLine($"{returnUrl}");
-                    Console.WriteLine($"{redirect_uri}");
-                    return Redirect(redirect_uri);
-                    //return View();
-                }
+                    // return Redirect(redirect_uri);
+                    return View();
             }
             return Unauthorized();
         }
