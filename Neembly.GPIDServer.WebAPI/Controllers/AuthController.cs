@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
+using System;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -29,8 +30,12 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (!string.IsNullOrEmpty(oAuthSignIn))
             {
                 if (await this.ValidateSignInCredentials(oAuthSignIn))
-                    //return Redirect(redirect_uri);
-                    return View();
+                {
+                    Console.WriteLine($"{returnUrl}");
+                    Console.WriteLine($"{redirect_uri}");
+                    return Redirect(redirect_uri);
+                    //return View();
+                }
             }
             return Unauthorized();
         }
