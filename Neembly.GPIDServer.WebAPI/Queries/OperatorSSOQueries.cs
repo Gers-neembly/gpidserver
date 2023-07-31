@@ -23,30 +23,26 @@ namespace Neembly.GPIDServer.WebAPI.Queries
 
 
         #region Get Google Operator SSO
-        public List<GoogleAuthProviderData> GetGoogleOperatorSSO()
+        public GoogleAuthProviderData GetGoogleOperatorSSO(string socialAccountName)
         {
+            if (string.IsNullOrEmpty(socialAccountName)) return null;
             var authProvider = SSO.google.ToString();
             var operatorSSOItems =  _context.OperatorSSO
-                    .Where(a => a.AuthProvider == authProvider && a.IsEnabled)
-                    .Select(a => a.Parameters);
-            var AuthData = new List<GoogleAuthProviderData>();
-            foreach (var ssoItem in operatorSSOItems)
-                AuthData.Add(JsonConvert.DeserializeObject<GoogleAuthProviderData>(ssoItem));
-            return AuthData;
+                    .Where(a => a.AuthProvider == authProvider && a.IsEnabled && a.SocialAccountName == socialAccountName)
+                    .Select(a => a.Parameters).FirstOrDefault();
+            return operatorSSOItems != null ? JsonConvert.DeserializeObject<GoogleAuthProviderData>(operatorSSOItems) : null;
         }
         #endregion
 
         #region Get Facebook Operator SSO
-        public List<FacebookAuthProviderData> GetFacebookOperatorSSO()
+        public FacebookAuthProviderData GetFacebookOperatorSSO(string socialAccountName)
         {
+            if (string.IsNullOrEmpty(socialAccountName)) return null;
             var authProvider = SSO.facebook.ToString();
             var operatorSSOItems = _context.OperatorSSO
-                    .Where(a => a.AuthProvider == authProvider && a.IsEnabled)
-                    .Select(a => a.Parameters);
-            var AuthData = new List<FacebookAuthProviderData>();
-            foreach (var ssoItem in operatorSSOItems)
-                AuthData.Add(JsonConvert.DeserializeObject<FacebookAuthProviderData>(ssoItem));
-            return AuthData;
+                    .Where(a => a.AuthProvider == authProvider && a.IsEnabled && a.SocialAccountName == socialAccountName)
+                    .Select(a => a.Parameters).FirstOrDefault();
+            return operatorSSOItems != null ? JsonConvert.DeserializeObject<FacebookAuthProviderData>(operatorSSOItems) : null;
         }
         #endregion
     }

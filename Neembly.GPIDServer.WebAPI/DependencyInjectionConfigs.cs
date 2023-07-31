@@ -11,6 +11,7 @@ using Neembly.GPIDServer.WebAPI.Interface;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Queries;
 using Neembly.GPIDServer.WebAPI.Services;
+using System;
 
 namespace Neembly.GPIDServer.WebAPI
 {
@@ -23,6 +24,13 @@ namespace Neembly.GPIDServer.WebAPI
         /// <returns></returns>
         public static IServiceCollection Add(this IServiceCollection services, IConfiguration configuration)
         {
+            var paramList = Environment.GetCommandLineArgs();
+
+            int offset = Array.FindIndex(paramList, m => m == "--webname");
+            string webname = string.Empty;
+            if (offset >= 0) webname = paramList[offset + 1];
+
+            Console.WriteLine($"Loading Webname : {webname}");
             //application database context
             services.AddDbContext<AppDBContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
@@ -73,8 +81,8 @@ namespace Neembly.GPIDServer.WebAPI
 
             // add authentications
             services.AddAuthentication()
-                    .AddGoogleAuth(services)
-                    .AddFacebookAuth(services);
+                    .AddGoogleAuth(services, webname)
+                    .AddFacebookAuth(services, webname);
 
             //mvc services
             services.AddMvc(options => 
