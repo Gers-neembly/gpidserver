@@ -1,4 +1,5 @@
-﻿using IdentityServer4;
+﻿using IdentityModel;
+using IdentityServer4;
 using IdentityServer4.Models;
 using Neembly.GPIDServer.Constants;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
@@ -11,16 +12,20 @@ namespace Neembly.GPIDServer.WebAPI
     {
         public static IEnumerable<IdentityResource> GetIdentityResources()
         {
+            // Claims automatically included in OpenId scope
+            var openIdScope = new IdentityResources.OpenId();
+            openIdScope.UserClaims.Add(JwtClaimTypes.Locale);
+
             return new List<IdentityResource>
             {
-                new IdentityResources.OpenId(),
+                openIdScope,
                 new IdentityResources.Email(),
                 new IdentityResources.Profile(),
                 new IdentityResource
                 {
                     Name = "role",
                     UserClaims = new List<string> {"role"}
-                }
+                },
             };
         }
 
@@ -117,7 +122,8 @@ namespace Neembly.GPIDServer.WebAPI
                                 AccessTokenType = AccessTokenType.Jwt,
                                 Enabled = true,
                                 AlwaysIncludeUserClaimsInIdToken = true,
-                                RequireConsent = false
+                                RequireConsent = false,
+                                AllowAccessTokensViaBrowser = true,
                             }
                         );
                     }
