@@ -79,7 +79,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             //        { return false; }
             //    }
             //}
-            return (validCounter == 3);
+            //return (validCounter == 3);
         }
         #endregion
     }
