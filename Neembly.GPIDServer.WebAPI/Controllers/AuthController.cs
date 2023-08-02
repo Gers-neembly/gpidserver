@@ -36,6 +36,13 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SignOut()
+        {
+            await _signInManager.SignOutAsync();
+            return Ok(true);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel vm)
         {
