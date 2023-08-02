@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using IdentityServer4;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
@@ -39,7 +41,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> SignOut()
         {
-            await _signInManager.SignOutAsync();
+            await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
+            await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
             return Ok(true);
         }
 
