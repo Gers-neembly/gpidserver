@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using IdentityServer4;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
@@ -26,14 +28,27 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             var queryString = HttpContext.Request.Query["returnUrl"].ToString();
             var oAuthSignIn = HttpUtility.ParseQueryString(queryString).Get("oAuthSignIn");
-            var redirect_uri = HttpUtility.ParseQueryString(queryString).Get("redirect_uri");
+            var ssoAuthProvider = HttpUtility.ParseQueryString(queryString).Get("ssoAuthProvider");
             if (!string.IsNullOrEmpty(oAuthSignIn))
             {
-                if (await this.ValidateSignInCredentials(oAuthSignIn))
-                    // return Redirect(redirect_uri);
+                if (await this.ValidateSignInCredentials(oAuthSignIn, ssoAuthProvider))
                     return View();
+                // this is another way
+                //var redirect_uri = HttpUtility.ParseQueryString(queryString).Get("redirect_uri");
+                // return Redirect(redirect_uri);
             }
             return Unauthorized();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SignOut()
+        {
+            await HttpContext.SignOutAsync();
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            return Ok(true);
         }
 
         [HttpPost]
@@ -45,15 +60,12 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
-        private async Task<bool> ValidateSignInCredentials(string oAuthSignIn)
+        private async Task<bool> ValidateSignInCredentials(string oAuthSignIn, string ssoAuthProvider)
         {
             string[] myContextList = oAuthSignIn.Split("$$$");
             LoginViewModel vm = new LoginViewModel { Username = myContextList[0], Password = myContextList[1]};
             if (!string.IsNullOrEmpty(vm.Username) && !string.IsNullOrEmpty(vm.Password))
-            {
-                var result = await _signInManager.PasswordSignInAsync(vm.Username, vm.Password, false, false);
-                return result.Succeeded;
-            }
+                return string.IsNullOrEmpty(ssoAuthProvider) ? (await _signInManager.PasswordSignInAsync(vm.Username, vm.Password, false, false)).Succeeded : true;
             return false;
         }
 
