@@ -43,8 +43,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> SignOut()
         {
-            await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
-            await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
+            await HttpContext.SignOutAsync();
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
             return Ok(true);
         }
 
