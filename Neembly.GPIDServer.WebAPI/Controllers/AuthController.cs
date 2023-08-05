@@ -1,5 +1,6 @@
 ﻿using IdentityServer4;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
@@ -43,11 +44,13 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> SignOut()
         {
+            await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
+            await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
             await HttpContext.SignOutAsync();
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            Response.Cookies.Delete("Winka.Identity.Cookie", new CookieOptions()
+            {
+                Secure = true,
+            });
             return Ok(true);
         }
 
@@ -65,7 +68,14 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             string[] myContextList = oAuthSignIn.Split("$$$");
             LoginViewModel vm = new LoginViewModel { Username = myContextList[0], Password = myContextList[1]};
             if (!string.IsNullOrEmpty(vm.Username) && !string.IsNullOrEmpty(vm.Password))
-                return string.IsNullOrEmpty(ssoAuthProvider) ? (await _signInManager.PasswordSignInAsync(vm.Username, vm.Password, false, false)).Succeeded : true;
+            {
+                if (string.IsNullOrEmpty(ssoAuthProvider))
+                {
+                    var result = (await _signInManager.PasswordSignInAsync(vm.Username, vm.Password, false, false)).Succeeded;
+                    return result;
+                }
+                else return true;
+            }
             return false;
         }
 
