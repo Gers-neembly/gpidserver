@@ -33,7 +33,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (!string.IsNullOrEmpty(oAuthSignIn))
             {
                 if (await this.ValidateSignInCredentials(oAuthSignIn, ssoAuthProvider))
-                    return View();
+                    return Redirect(returnUrl);
+                 //   return View();
                 // this is another way
                 //var redirect_uri = HttpUtility.ParseQueryString(queryString).Get("redirect_uri");
                 // return Redirect(redirect_uri);
