@@ -20,7 +20,6 @@
     },
     "Neembly.GPIDServer.WebAPI": {
       "commandName": "Project",
-      "commandLineArgs": "--webname bitcoingame --urls http://127.0.0.1:9002 --environment Development",
       "launchBrowser": true,
       "launchUrl": "api/version",
       "environmentVariables": {

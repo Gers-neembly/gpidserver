@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
+using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 using System;
 using System.Threading.Tasks;
@@ -15,24 +16,27 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     {
         #region Member Variable
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly IDataAccess _dataAccess;
         #endregion
 
         #region Constructor
         public AuthController(
-            SignInManager<AppUser> signInManager)
+            SignInManager<AppUser> signInManager,
+            IDataAccess dataAccess)
         {
             _signInManager = signInManager;
+            _dataAccess = dataAccess;
         }
         #endregion
         [HttpGet]
         public async Task<IActionResult> Login(string returnUrl)
         {
             var queryString = HttpContext.Request.Query["returnUrl"].ToString();
-            var oAuthSignIn = HttpUtility.ParseQueryString(queryString).Get("oAuthSignIn");
+            var username = HttpUtility.ParseQueryString(queryString).Get("username");
             var ssoAuthProvider = HttpUtility.ParseQueryString(queryString).Get("ssoAuthProvider");
-            if (!string.IsNullOrEmpty(oAuthSignIn))
+            if (!string.IsNullOrEmpty(username))
             {
-                if (await this.ValidateSignInCredentials(oAuthSignIn, ssoAuthProvider))
+                if (await this.ValidateSignInCredentials(username, ssoAuthProvider))
                     return Redirect(returnUrl);
                  //   return View();
                 // this is another way
@@ -64,16 +68,15 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
-        private async Task<bool> ValidateSignInCredentials(string oAuthSignIn, string ssoAuthProvider)
+        private async Task<bool> ValidateSignInCredentials(string username, string ssoAuthProvider)
         {
-            string[] myContextList = oAuthSignIn.Split("$$$");
-            LoginViewModel vm = new LoginViewModel { Username = myContextList[0], Password = myContextList[1]};
-            if (!string.IsNullOrEmpty(vm.Username) && !string.IsNullOrEmpty(vm.Password))
+            if (!string.IsNullOrEmpty(username))
             {
                 if (string.IsNullOrEmpty(ssoAuthProvider))
                 {
-                    var result = (await _signInManager.PasswordSignInAsync(vm.Username, vm.Password, false, false)).Succeeded;
-                    return result;
+                    var appUser = await _dataAccess.GetAppUser(username);
+                    await _signInManager.SignInAsync(appUser, false);
+                    return true;
                 }
                 else return true;
             }
