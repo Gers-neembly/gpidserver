@@ -75,6 +75,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 if (string.IsNullOrEmpty(ssoAuthProvider))
                 {
                     var appUser = await _dataAccess.GetAppUser(username);
+                    if (appUser == null) return false;
                     await _signInManager.SignInAsync(appUser, false);
                     return true;
                 }
