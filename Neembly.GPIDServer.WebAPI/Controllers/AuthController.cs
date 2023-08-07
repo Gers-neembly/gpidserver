@@ -52,7 +52,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
-            await HttpContext.SignOutAsync();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync("idsrv.external");
+            await HttpContext.SignOutAsync("idsrv.session"); await HttpContext.SignOutAsync();
             Response.Cookies.Delete("Winka.Identity.Cookie", new CookieOptions()
             {
                 Secure = true,
@@ -65,9 +67,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             //{
             //    Secure = true,
             //});
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignOutAsync("idsrv.external");
-            await HttpContext.SignOutAsync("idsrv.session");
             return Ok(true);
         }
 
