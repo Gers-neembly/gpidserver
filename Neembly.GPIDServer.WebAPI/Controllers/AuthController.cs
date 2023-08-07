@@ -71,6 +71,19 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Ok(true);
         }
 
+        [HttpGet]
+        [Route("cookie-signout")]
+        public IActionResult UserLogout(string returnUrl, string token)
+        {
+            if (token == "winkaprop239")
+            {
+                RemoveCookie("Winka.Identity.Cookie");
+                RemoveCookie("idsrv.external");
+                RemoveCookie("idsrv.session");
+            }
+            return Redirect(returnUrl);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel vm)
         {
