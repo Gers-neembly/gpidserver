@@ -56,6 +56,14 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             {
                 Secure = true,
             });
+            Response.Cookies.Delete("idserv.external", new CookieOptions()
+            {
+                Secure = true,
+            });
+            Response.Cookies.Delete("idserv.session", new CookieOptions()
+            {
+                Secure = true,
+            });
             return Ok(true);
         }
 
