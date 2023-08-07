@@ -47,26 +47,28 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
+        public void RemoveCookie(string key)
+        {
+            //Erase the data in the cookie
+            CookieOptions option = new CookieOptions();
+            option.Expires = DateTime.Now.AddDays(-1);
+            option.Secure = true;
+            option.IsEssential = true;
+            Response.Cookies.Append(key, string.Empty, option);
+            //Then delete the cookie
+            Response.Cookies.Delete(key);
+        }
+
         [HttpGet]
         public async Task<IActionResult> SignOut()
         {
             await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignOutAsync("idsrv.external");
-            await HttpContext.SignOutAsync("idsrv.session"); await HttpContext.SignOutAsync();
-            Response.Cookies.Delete("Winka.Identity.Cookie", new CookieOptions()
-            {
-                Secure = true,
-            });
-            //Response.Cookies.Delete("idsrv.external", new CookieOptions()
-            //{
-            //    Secure = true,
-            //});
-            //Response.Cookies.Delete("idsrv.session", new CookieOptions()
-            //{
-            //    Secure = true,
-            //});
+            await HttpContext.SignOutAsync();
+            RemoveCookie("Winka.Identity.Cookie");
+            RemoveCookie("idsrv.external");
+            RemoveCookie("idsrv.session");
             return Ok(true);
         }
 
