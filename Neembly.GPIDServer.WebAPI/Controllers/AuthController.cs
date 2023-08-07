@@ -1,8 +1,11 @@
 ﻿using IdentityServer4;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Neembly.GPIDServer.Persistence.Entities;
+using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 using System;
 using System.Threading.Tasks;
@@ -14,25 +17,29 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     {
         #region Member Variable
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly IDataAccess _dataAccess;
         #endregion
 
         #region Constructor
         public AuthController(
-            SignInManager<AppUser> signInManager)
+            SignInManager<AppUser> signInManager,
+            IDataAccess dataAccess)
         {
             _signInManager = signInManager;
+            _dataAccess = dataAccess;
         }
         #endregion
         [HttpGet]
         public async Task<IActionResult> Login(string returnUrl)
         {
             var queryString = HttpContext.Request.Query["returnUrl"].ToString();
-            var oAuthSignIn = HttpUtility.ParseQueryString(queryString).Get("oAuthSignIn");
+            var username = HttpUtility.ParseQueryString(queryString).Get("username");
             var ssoAuthProvider = HttpUtility.ParseQueryString(queryString).Get("ssoAuthProvider");
-            if (!string.IsNullOrEmpty(oAuthSignIn))
+            if (!string.IsNullOrEmpty(username))
             {
-                if (await this.ValidateSignInCredentials(oAuthSignIn, ssoAuthProvider))
-                    return View();
+                if (await this.ValidateSignInCredentials(username, ssoAuthProvider))
+                    return Redirect(returnUrl);
+                 //   return View();
                 // this is another way
                 //var redirect_uri = HttpUtility.ParseQueryString(queryString).Get("redirect_uri");
                 // return Redirect(redirect_uri);
@@ -40,15 +47,41 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
+        public void RemoveCookie(string key)
+        {
+            //Erase the data in the cookie
+            CookieOptions option = new CookieOptions();
+            option.Expires = DateTime.Now.AddDays(-1);
+            option.Secure = true;
+            option.IsEssential = true;
+            Response.Cookies.Append(key, string.Empty, option);
+            //Then delete the cookie
+            Response.Cookies.Delete(key);
+        }
+
         [HttpGet]
         public async Task<IActionResult> SignOut()
         {
+            await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
+            await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
             await HttpContext.SignOutAsync();
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            RemoveCookie("Winka.Identity.Cookie");
+            RemoveCookie("idsrv.external");
+            RemoveCookie("idsrv.session");
             return Ok(true);
+        }
+
+        [HttpGet]
+        [Route("cookie-signout")]
+        public IActionResult UserLogout(string returnUrl, string token)
+        {
+            if (token == "winkaprop239")
+            {
+                RemoveCookie("Winka.Identity.Cookie");
+                RemoveCookie("idsrv.external");
+                RemoveCookie("idsrv.session");
+            }
+            return Redirect(returnUrl);
         }
 
         [HttpPost]
@@ -60,12 +93,19 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
-        private async Task<bool> ValidateSignInCredentials(string oAuthSignIn, string ssoAuthProvider)
+        private async Task<bool> ValidateSignInCredentials(string username, string ssoAuthProvider)
         {
-            string[] myContextList = oAuthSignIn.Split("$$$");
-            LoginViewModel vm = new LoginViewModel { Username = myContextList[0], Password = myContextList[1]};
-            if (!string.IsNullOrEmpty(vm.Username) && !string.IsNullOrEmpty(vm.Password))
-                return string.IsNullOrEmpty(ssoAuthProvider) ? (await _signInManager.PasswordSignInAsync(vm.Username, vm.Password, false, false)).Succeeded : true;
+            if (!string.IsNullOrEmpty(username))
+            {
+                if (string.IsNullOrEmpty(ssoAuthProvider))
+                {
+                    var appUser = await _dataAccess.GetAppUser(username);
+                    if (appUser == null) return false;
+                    await _signInManager.SignInAsync(appUser, false);
+                    return true;
+                }
+                else return true;
+            }
             return false;
         }
 

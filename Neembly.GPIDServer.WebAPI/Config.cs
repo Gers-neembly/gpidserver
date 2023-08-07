@@ -110,7 +110,7 @@ namespace Neembly.GPIDServer.WebAPI
                             new Client
                             {
                                 ClientId = authClientItem.ClientId,
-                                AllowedGrantTypes = new List<string> { "authorization_code" },
+                                AllowedGrantTypes = GrantTypes.Code,
                                 ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
                                 AllowedScopes = {
                                     IdentityServerConstants.StandardScopes.OpenId,
@@ -123,7 +123,7 @@ namespace Neembly.GPIDServer.WebAPI
                                 Enabled = true,
                                 AlwaysIncludeUserClaimsInIdToken = true,
                                 RequireConsent = false,
-                                AllowAccessTokensViaBrowser = true,
+                                AllowAccessTokensViaBrowser = true
                             }
                         );
                     }
