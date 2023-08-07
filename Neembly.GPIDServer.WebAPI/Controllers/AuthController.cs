@@ -1,5 +1,6 @@
 ﻿using IdentityServer4;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -56,14 +57,17 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             {
                 Secure = true,
             });
-            Response.Cookies.Delete("idsrv.external", new CookieOptions()
-            {
-                Secure = true,
-            });
-            Response.Cookies.Delete("idsrv.session", new CookieOptions()
-            {
-                Secure = true,
-            });
+            //Response.Cookies.Delete("idsrv.external", new CookieOptions()
+            //{
+            //    Secure = true,
+            //});
+            //Response.Cookies.Delete("idsrv.session", new CookieOptions()
+            //{
+            //    Secure = true,
+            //});
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync("idsrv.external");
+            await HttpContext.SignOutAsync("idsrv.session");
             return Ok(true);
         }
 
