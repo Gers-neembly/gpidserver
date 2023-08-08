@@ -21,7 +21,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     public class AccountController : ControllerBase
     {
         #region Member Variable
-        private readonly UserDetailConfiguration _userDetailConfiguration;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -34,7 +33,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
         #region Constructor
         public AccountController(
-            UserDetailConfiguration userDetailConfiguration,
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager,
             RoleManager<IdentityRole> roleManager,
@@ -45,7 +43,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             ITokenProviderService tokenProviderServices
             )
         {
-            _userDetailConfiguration = userDetailConfiguration;
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
@@ -146,15 +143,10 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 if (!result.Succeeded)
                     return NotFound(GlobalConstants.ErrCreateAccount);
 
-                var avatarImage =  string.IsNullOrEmpty(registerInfo.Avatar) ? _userDetailConfiguration.AvatarInfo.DefaultUrl
-                                  : registerInfo.Avatar;
-
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarImage", avatarImage));
-
 
                 if (registerInfo.Roles != null)
                 {

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.Persistence;
 using Neembly.GPIDServer.Persistence.Entities;
-using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Interface;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
@@ -59,11 +58,6 @@ namespace Neembly.GPIDServer.WebAPI
             var authClientConfig = new AuthClientConfiguration();
             configuration.Bind("AuthClientConfiguration", authClientConfig);
             services.AddSingleton(authClientConfig);
-
-            //user details informatrion config
-            var userDetailConfiguration = new UserDetailConfiguration();
-            configuration.Bind("UserDetailConfiguration", userDetailConfiguration);
-            services.AddSingleton(userDetailConfiguration);
 
             //add identity server
             services.AddIdentityServer()
