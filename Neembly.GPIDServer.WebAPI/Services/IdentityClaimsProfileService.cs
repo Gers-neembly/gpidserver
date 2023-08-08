@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
+using Neembly.GPIDServer.WebAPI.Models.Configs;
 using System;
 using System.Linq;
 using System.Security.Claims;
