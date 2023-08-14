@@ -153,8 +153,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarImage", avatarImage));
-
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
 
                 if (registerInfo.Roles != null)
                 {

@@ -131,7 +131,7 @@ namespace Neembly.GPIDServer.SharedServices.SSO
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", ssoPlayerRegisterInfo.OperatorId.ToString()));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", ssoPlayerRegisterInfo.PlayerId.ToString()));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
-                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarImage", avatarImage));
+                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(ssoPlayerRegisterInfo.AuthProviderClaim, "true"));
 
                         return true;

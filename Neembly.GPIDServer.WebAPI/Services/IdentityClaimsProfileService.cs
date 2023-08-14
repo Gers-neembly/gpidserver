@@ -47,6 +47,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
             var roles = await _userManager.GetRolesAsync(user);
             var claims = principal.Claims.ToList();
             var operatorList = _dataAccess.GetPlayersOperators(user.Id);
+            var customClaims = await _userManager.GetClaimsAsync(user);
             claims = claims.Where(claim => context.RequestedClaimTypes.Contains(claim.Type)).ToList();
 
             claims.Add(new Claim("email", user.Email));
@@ -56,6 +57,9 @@ namespace Neembly.GPIDServer.WebAPI.Services
             int index = 1;
             foreach (var itemOperator in operatorList)
                 claims.Add(new Claim($"operator[{index++}]", itemOperator.ToString()));
+
+            foreach (var item in customClaims)
+                claims.Add(new Claim(item.Type, item.Value));
 
             foreach (string role in roles)
                 claims.Add(new Claim(JwtClaimTypes.Role, role));
