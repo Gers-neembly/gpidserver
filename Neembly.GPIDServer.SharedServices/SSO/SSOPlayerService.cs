@@ -13,6 +13,7 @@ namespace Neembly.GPIDServer.SharedServices.SSO
     public class SSOPlayerService : ISSOPlayerService
     {
         #region Member Variables
+        private readonly UserDetailConfiguration _userDetailConfiguration;
         private readonly AuthTokenInfo _authTokenInfo;
         private readonly IPlayerNetService _playerNetService;
         private readonly ILogger _logger;
@@ -20,11 +21,13 @@ namespace Neembly.GPIDServer.SharedServices.SSO
         #endregion
 
         #region Constructor
-        public SSOPlayerService(AuthTokenInfo authTokenInfo,
+        public SSOPlayerService(UserDetailConfiguration userDetailConfiguration,
+                                AuthTokenInfo authTokenInfo,
                                 IPlayerNetService playerNetService,
                                 ILoggerFactory loggerFactory,
                                 UserManager<AppUser> userManager)
         {
+            _userDetailConfiguration = userDetailConfiguration;
             _authTokenInfo = authTokenInfo;
             _playerNetService = playerNetService;
             _logger = loggerFactory.CreateLogger<SSOPlayerService>();
@@ -121,12 +124,16 @@ namespace Neembly.GPIDServer.SharedServices.SSO
                     var result = await _userManager.CreateAsync(user, $"{user.UserName}{ssoPlayerRegisterInfo.OperatorId}");
                     if (result.Succeeded)
                     {
+                        var avatarImage = _userDetailConfiguration.AvatarInfo.DefaultUrl;
+
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", ssoPlayerRegisterInfo.Username));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", ssoPlayerRegisterInfo.Email));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", ssoPlayerRegisterInfo.OperatorId.ToString()));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", ssoPlayerRegisterInfo.PlayerId.ToString()));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
+                        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
                         await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(ssoPlayerRegisterInfo.AuthProviderClaim, "true"));
+
                         return true;
                     }
                 }
