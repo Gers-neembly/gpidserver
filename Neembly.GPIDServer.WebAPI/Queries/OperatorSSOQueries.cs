@@ -34,6 +34,18 @@ namespace Neembly.GPIDServer.WebAPI.Queries
         }
         #endregion
 
+        #region Get Telegram Operator SSO
+        public TelegramAuthProviderData GetTelegramOperatorSSO(string socialAccountName)
+        {
+            if (string.IsNullOrEmpty(socialAccountName)) return null;
+            var authProvider = SSO.telegram.ToString();
+            var operatorSSOItems = _context.OperatorSSO
+                    .Where(a => a.AuthProvider == authProvider && a.IsEnabled && a.SocialAccountName == socialAccountName)
+                    .Select(a => a.Parameters).FirstOrDefault();
+            return operatorSSOItems != null ? JsonConvert.DeserializeObject<TelegramAuthProviderData>(operatorSSOItems) : null;
+        }
+        #endregion
+
         #region Get Facebook Operator SSO
         public FacebookAuthProviderData GetFacebookOperatorSSO(string socialAccountName)
         {
