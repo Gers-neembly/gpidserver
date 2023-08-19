@@ -1,10 +1,9 @@
-﻿
-using IdentityServer4;
+﻿using IdentityServer4;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
+using Neembly.GPIDServer.Security.OAuth.Telegram;
 using Neembly.GPIDServer.WebAPI.Interface;
 using System;
-using System.Threading.Tasks;
 
 namespace Neembly.GPIDServer.WebAPI.Services
 {
@@ -19,9 +18,9 @@ namespace Neembly.GPIDServer.WebAPI.Services
             if (telegramProviders != null)
             {
                 Console.WriteLine($"Loading Telegram Config for Webname : {socialAccountName}");
-                //authenticationBuilder = authenticationBuilder.AddGoogle(options =>
-                //{
-                //    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                authenticationBuilder = authenticationBuilder.AddTelegram(options =>
+                {
+                      options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                 //    options.ClientId = googleProviders.Client_Id;
                 //    options.ClientSecret = googleProviders.Client_Secret;
                 //    options.Events.OnRedirectToAuthorizationEndpoint = context =>
@@ -29,7 +28,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
                 //        context.Response.Redirect(context.RedirectUri + "&prompt=select_account consent"); //also, &prompt=select_account
                 //        return Task.CompletedTask;
                 //    };
-                //});
+                });
             }
             else
                 Console.WriteLine($"No Telegram Config for Webname : {socialAccountName}");
