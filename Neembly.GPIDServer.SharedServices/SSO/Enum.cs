@@ -8,6 +8,8 @@ namespace Neembly.GPIDServer.SharedServices.SSO
         {
             [Description("AuthGoogleSSO")]
             google,
+            [Description("AuthTelegramSSO")]
+            telegram,
             [Description("AuthFacebookSSO")]
             facebook,
         }
