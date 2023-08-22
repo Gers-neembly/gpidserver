@@ -88,7 +88,8 @@ namespace Neembly.GPIDServer.WebAPI
             // add authentications
             services.AddAuthentication()
                     .AddGoogleAuth(services, webname)
-                    .AddFacebookAuth(services, webname);
+                    .AddFacebookAuth(services, webname)
+                    .AddTelegramAuth(services, webname);
 
             //mvc services
             services.AddMvc(options => 
