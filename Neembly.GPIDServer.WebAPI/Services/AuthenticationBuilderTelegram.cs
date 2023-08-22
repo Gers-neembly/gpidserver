@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.Security.OAuth.Telegram;
 using Neembly.GPIDServer.WebAPI.Interface;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Neembly.GPIDServer.WebAPI.Services
 {
@@ -20,14 +22,18 @@ namespace Neembly.GPIDServer.WebAPI.Services
                 Console.WriteLine($"Loading Telegram Config for Webname : {socialAccountName}");
                 authenticationBuilder = authenticationBuilder.AddTelegram(options =>
                 {
-                      options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
-                //    options.ClientId = googleProviders.Client_Id;
-                //    options.ClientSecret = googleProviders.Client_Secret;
-                //    options.Events.OnRedirectToAuthorizationEndpoint = context =>
-                //    {
-                //        context.Response.Redirect(context.RedirectUri + "&prompt=select_account consent"); //also, &prompt=select_account
-                //        return Task.CompletedTask;
-                //    };
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.ClientId = telegramProviders.ClientId;
+                    options.ClientSecret = telegramProviders.Secret;
+                    options.Bot_Id = telegramProviders.Bot_Id;
+                    options.Public_Key = telegramProviders.Public_Key;
+                    options.Nonce = telegramProviders.Nonce;
+                    options.Scope.Add(telegramProviders.Scope);
+                    options.Events.OnRedirectToAuthorizationEndpoint = context =>
+                    {
+                            context.Response.Redirect(context.RedirectUri + $"&bot_id={telegramProviders.Bot_Id}&public_key={telegramProviders.Public_Key}&nonce={telegramProviders.Nonce}"); 
+                            return Task.CompletedTask;
+                    };
                 });
             }
             else

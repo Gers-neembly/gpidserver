@@ -12,6 +12,7 @@ using System;
 using System.Threading.Tasks;
 using Neembly.GPIDServer.WebAPI.Models.Constants.SSO;
 using Neembly.GPIDServer.WebAPI.Models.oAuth;
+using Neembly.GPIDServer.Security.OAuth.Telegram;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -61,6 +62,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Telegram Login Authentication
+        [Authorize(AuthenticationSchemes = TelegramAuthenticationDefaults.AuthenticationScheme)]
         [Route("{operatorId}/login-telegram")]
         [HttpGet]
         public async Task<IActionResult> LoginTelegram(int operatorId, string returnUrl)
