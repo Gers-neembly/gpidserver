@@ -33,6 +33,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
                     options.Events.OnRedirectToAuthorizationEndpoint = context =>
                     {
                         var urlOrigin = HttpUtility.ParseQueryString(context.Request.QueryString.ToString()).Get("returnUrl");
+                        if (string.IsNullOrEmpty(urlOrigin)) urlOrigin = context.Request.Headers["origin"].ToString();
                         context.Response.Redirect(context.RedirectUri + $"&bot_id={telegramProviders.Bot_Id}&public_key={telegramProviders.Public_Key}&nonce={telegramProviders.Nonce}&origin={urlOrigin}");
                         return Task.CompletedTask;
                     };
