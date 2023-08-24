@@ -31,8 +31,9 @@ namespace Neembly.GPIDServer.WebAPI.Services
                     options.Scope.Add(telegramProviders.Scope);
                     options.Events.OnRedirectToAuthorizationEndpoint = context =>
                     {
-                            context.Response.Redirect(context.RedirectUri + $"&bot_id={telegramProviders.Bot_Id}&public_key={telegramProviders.Public_Key}&nonce={telegramProviders.Nonce}"); 
-                            return Task.CompletedTask;
+                        string urlReferer = context.Request.Headers["Origin"].ToString();
+                        context.Response.Redirect(context.RedirectUri + $"&bot_id={telegramProviders.Bot_Id}&public_key={telegramProviders.Public_Key}&nonce={telegramProviders.Nonce}&origin={urlReferer}");
+                        return Task.CompletedTask;
                     };
                 });
             }
