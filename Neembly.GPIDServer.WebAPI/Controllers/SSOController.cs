@@ -95,7 +95,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 int playerId = 0;
 
                 string authProvider = SSOConstants.validSSOAuthenticator[(int)authSSOName];
-                string authProviderClaim = SSOConstants.validSSOAuthenticator[(int)authSSOName];
+                string authProviderClaim = SSOConstants.authenticatorClaims[(int)authSSOName];
 
                 SSOUserInfo userClaimInfo = _ssoClaimsService.GetSSOUserInfo(this.User);
                 string displayUserName = userClaimInfo.Email;
