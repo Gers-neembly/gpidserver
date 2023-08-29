@@ -3,9 +3,9 @@ namespace Neembly.GPIDServer.WebAPI.Models.Constants.SSO
 {
     public enum AuthSSOSupported
     {
-        google = 1,
-        telegram = 2,
-        facebook = 3
+        google = 0,
+        telegram = 1,
+        facebook = 2
     }
 
     public static class SSOConstants
