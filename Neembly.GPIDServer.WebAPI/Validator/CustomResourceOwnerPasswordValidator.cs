@@ -6,6 +6,7 @@ using Neembly.GPIDServer.Persistence.Entities;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static Neembly.GPIDServer.SharedServices.SSO.Enum;
 
 namespace Neembly.GPIDServer.WebAPI.Validator
 {
@@ -13,15 +14,18 @@ namespace Neembly.GPIDServer.WebAPI.Validator
     {
         #region Member Variable
         private readonly AppDBContext _context;
+        private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
         #endregion
 
         public CustomResourceOwnerPasswordValidator(
             AppDBContext context,
-             UserManager<AppUser> userManager
+            SignInManager<AppUser> signInManager,
+            UserManager<AppUser> userManager
             )
         {
             _context = context;
+            _signInManager = signInManager;
             _userManager = userManager;
         }
 
@@ -29,6 +33,7 @@ namespace Neembly.GPIDServer.WebAPI.Validator
         {
             string operatorId = context.Request.Raw["operatorId"];
             string email = context.Request.Raw["email"];
+            string ssoAuthProvider = context.Request.Raw["ssoAuthProvider"];
             string userName = $"{context.UserName}_{operatorId}";
             AppUser user = null;
             if (string.IsNullOrEmpty(email))
@@ -38,9 +43,21 @@ namespace Neembly.GPIDServer.WebAPI.Validator
                                             && p.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
             if (user != null)
             {
-                bool passwordOk = _userManager.CheckPasswordAsync(user, context.Password).GetAwaiter().GetResult();
+                bool passwordOk = false;
+                if (string.IsNullOrEmpty(ssoAuthProvider))
+                    passwordOk = _userManager.CheckPasswordAsync(user, context.Password).GetAwaiter().GetResult();
+                else
+                {
+                    if (Enum.IsDefined(typeof(SSO), ssoAuthProvider.ToLower()))
+                    {
+                        var emailAppUserClaims = _userManager.GetClaimsAsync(user).GetAwaiter().GetResult();
+                        var test = emailAppUserClaims.Where(e => e.Type == $"auth{ssoAuthProvider}SSO").Select(e => e.Value).FirstOrDefault();
+                        passwordOk = !string.IsNullOrEmpty(test) ? test == "true" : false; 
+                    }
+                }
                 if (passwordOk)
                 {
+                    _signInManager.SignInAsync(user, false);
                     context.Result = new GrantValidationResult(user.Id, "password", null, "local", null);
                     return Task.FromResult(context.Result);
                 }

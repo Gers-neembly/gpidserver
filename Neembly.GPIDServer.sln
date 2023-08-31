@@ -19,6 +19,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neembly.GPIDServer.SharedSe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neembly.GPIDServer.Constants", "Neembly.GPIDServer.Constants\Neembly.GPIDServer.Constants.csproj", "{2F89BF75-FBD7-4E77-9F10-57852CBE7F40}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Neembly.GPIDServer.Security", "Neembly.GPIDServer.Security", "{B286DD10-20A8-4009-A791-9184C0DDDF46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neembly.GPIDServer.Security.OAuth.Telegram", "Neembly.GPIDServer.Security\Neembly.GPIDServer.Security.OAuth.Telegram\Neembly.GPIDServer.Security.OAuth.Telegram.csproj", "{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +71,14 @@ Global
 		{2F89BF75-FBD7-4E77-9F10-57852CBE7F40}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2F89BF75-FBD7-4E77-9F10-57852CBE7F40}.Sandbox|Any CPU.ActiveCfg = Sandbox|Any CPU
 		{2F89BF75-FBD7-4E77-9F10-57852CBE7F40}.Sandbox|Any CPU.Build.0 = Sandbox|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Preprod|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Preprod|Any CPU.Build.0 = Debug|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Sandbox|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB}.Sandbox|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -77,6 +89,7 @@ Global
 		{22779D9E-E51D-4573-8F9B-AB8D02400117} = {A035BFB7-0AD8-42C8-AD32-0B5DF81A2D7A}
 		{933A6989-972A-4D71-B08C-E88A1E548BD4} = {A035BFB7-0AD8-42C8-AD32-0B5DF81A2D7A}
 		{2F89BF75-FBD7-4E77-9F10-57852CBE7F40} = {A035BFB7-0AD8-42C8-AD32-0B5DF81A2D7A}
+		{F4E22EB0-CCFC-4340-A720-27162F5EFDAB} = {B286DD10-20A8-4009-A791-9184C0DDDF46}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {360FE2A0-18EA-4652-9BC2-704EB76C5E16}

@@ -10,6 +10,7 @@ namespace Neembly.GPIDServer.Persistence
         {
         }
         public DbSet<OperatorData> OperatorData { get; set; }
+        public DbSet<OperatorSSO> OperatorSSO { get; set; }
 
     }
 }

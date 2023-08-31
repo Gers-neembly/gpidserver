@@ -1,4 +1,5 @@
-﻿using IdentityServer4;
+﻿using IdentityModel;
+using IdentityServer4;
 using IdentityServer4.Models;
 using Neembly.GPIDServer.Constants;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
@@ -11,11 +12,20 @@ namespace Neembly.GPIDServer.WebAPI
     {
         public static IEnumerable<IdentityResource> GetIdentityResources()
         {
+            // Claims automatically included in OpenId scope
+            var openIdScope = new IdentityResources.OpenId();
+            openIdScope.UserClaims.Add(JwtClaimTypes.Locale);
+
             return new List<IdentityResource>
             {
-                new IdentityResources.OpenId(),
+                openIdScope,
                 new IdentityResources.Email(),
                 new IdentityResources.Profile(),
+                new IdentityResource
+                {
+                    Name = "role",
+                    UserClaims = new List<string> {"role"}
+                },
             };
         }
 
@@ -81,7 +91,7 @@ namespace Neembly.GPIDServer.WebAPI
                             }
                         );
                     }
-                    if (authClientItem.Type.Equals(GlobalConstants.AuthTypeClientCredentials, StringComparison.InvariantCultureIgnoreCase))
+                    else if (authClientItem.Type.Equals(GlobalConstants.AuthTypeClientCredentials, StringComparison.InvariantCultureIgnoreCase))
                     {
                         result.Add(
                             new Client
@@ -89,8 +99,31 @@ namespace Neembly.GPIDServer.WebAPI
                                 ClientId = authClientItem.ClientId,
                                 AllowedGrantTypes = GrantTypes.ClientCredentials,
                                 ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
-                                AllowedScopes = {authClientItem.ApiScope},
+                                AllowedScopes = { authClientItem.ApiScope },
                                 AccessTokenLifetime = authClientItem.LifeTime
+                            }
+                        );
+                    }
+                    else if (authClientItem.Type.Equals(GlobalConstants.AuthTypeGrantCode, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        result.Add(
+                            new Client
+                            {
+                                ClientId = authClientItem.ClientId,
+                                AllowedGrantTypes = GrantTypes.Code,
+                                ClientSecrets = new List<Secret> { new Secret(authClientItem.SecretKey.Sha256()) },
+                                AllowedScopes = {
+                                    IdentityServerConstants.StandardScopes.OpenId,
+                                    IdentityServerConstants.StandardScopes.Profile,
+                                    IdentityServerConstants.StandardScopes.Email,
+                                    authClientItem.ApiScope
+                                },
+                                RedirectUris = authClientItem.Redirect_Uri,
+                                AccessTokenType = AccessTokenType.Jwt,
+                                Enabled = true,
+                                AlwaysIncludeUserClaimsInIdToken = true,
+                                RequireConsent = false,
+                                AllowAccessTokensViaBrowser = true
                             }
                         );
                     }
