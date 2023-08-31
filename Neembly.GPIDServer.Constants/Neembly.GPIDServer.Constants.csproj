@@ -2,7 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Configurations>Debug;Release;Sandbox;Staging</Configurations>
+    <Configurations>Debug;Release;Sandbox;Staging;Preprod</Configurations>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.1.2" />
+  </ItemGroup>
 
 </Project>

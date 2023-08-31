@@ -4,12 +4,19 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using Microsoft.Extensions.Logging;
+using System;
+using System.Diagnostics;
+
 namespace Neembly.GPIDServer.WebAPI
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly ILogger _logger;
+        public Startup(IConfiguration configuration, ILoggerFactory logFactory)
         {
+            _logger = logFactory.CreateLogger<Startup>();
+            _logger.LogInformation($"{Process.GetCurrentProcess()} booting...");
             Configuration = configuration;
         }
 
@@ -32,6 +39,7 @@ namespace Neembly.GPIDServer.WebAPI
 
             //DI for persistence
             Persistence.DependencyInjection.Add(services);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -64,9 +72,12 @@ namespace Neembly.GPIDServer.WebAPI
             forwardOptions.KnownProxies.Clear();
 
             app.UseForwardedHeaders(forwardOptions);
+            app.UseStaticFiles();
             app.UseIdentityServer();
             app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseAuthentication();
+            app.UseMvcWithDefaultRoute();
+            _logger.LogInformation($"{Process.GetCurrentProcess().MainModule.FileName} started {DateTime.Now}");
         }
     }
 }

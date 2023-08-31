@@ -16,7 +16,7 @@ namespace Neembly.GPIDServer.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
-                .HasAnnotation("ProductVersion", "2.1.4-rtm-31024")
+                .HasAnnotation("ProductVersion", "2.1.14-servicing-32113")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -196,6 +196,32 @@ namespace Neembly.GPIDServer.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OperatorData");
+                });
+
+            modelBuilder.Entity("Neembly.GPIDServer.Persistence.Entities.OperatorSSO", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("AuthProvider")
+                        .HasMaxLength(50);
+
+                    b.Property<bool>("AutoRegister");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1028);
+
+                    b.Property<bool>("IsEnabled");
+
+                    b.Property<string>("Parameters")
+                        .HasMaxLength(4096);
+
+                    b.Property<string>("SocialAccountName")
+                        .HasMaxLength(30);
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OperatorSSO");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

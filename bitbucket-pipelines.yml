@@ -19,7 +19,7 @@ pipelines:
           - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
           - dotnet build
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
-    deploy-dev:
+    deploy-dev-scp:
     - step:
         name: Deploy to DEV-test
         deployment: test
@@ -29,63 +29,80 @@ pipelines:
           - echo "Manual deploy to DEV-test environment"
           - export ASPNETCORE_ENVIRONMENT="Development"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Debug 
-          - dotnet publish $PROJECT_NAME --configuration Debug 
+          - dotnet build $PROJECT_NAME --configuration Debug
+          - dotnet publish $PROJECT_NAME --configuration Debug
           - echo "Uploading to Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
+          - sleep 10
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-          - echo "Updating DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR builddate.txt
-    deploy-sb:
+    deploy-sb-ws:
+    - variables:
+      - name: ServerId
+      - name: Password 		
     - step:
-        name: Deploy to UAT-Sandbox
+        name: Deploy SB-WS
         deployment: sandbox
         caches:
           - dotnetcore
         script:
-          - echo "Manual deploy to UAT-Sandbox environment"
+          - echo $ServerId
+          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
+          - if [ "$ServerId" = "1" ]; then export SSH_SERVER_SBWS=$SSH_SERVER_SBWS1 ; fi
+          - if [ "$ServerId" = "2" ]; then export SSH_SERVER_SBWS=$SSH_SERVER_SBWS2 ; fi
+          - echo $SSH_SERVER_SBWS
+          - if [ "$SSH_SERVER_SBWS" = "" ]; then exit 1 ; fi
+          - echo "Deploy to SB-WS"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Sandbox 
-          - dotnet publish $PROJECT_NAME --configuration Sandbox 
+          - dotnet build $PROJECT_NAME --configuration Sandbox
+          - dotnet publish $PROJECT_NAME --configuration Sandbox
           - echo "Uploading to Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
+          - sleep 10
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-          - echo "Updating DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_SANDBOX $FTP_DEPLOYDIR builddate.txt
-    deploy-release:
-    # production push-merge build 
+    deploy-preprod-release:
+    - variables:
+      - name: Password 		
     - step:
-        name: Deploy to Preprod
+        name: Deploy SB-Preprod
+        deployment: preprod
         caches:
           - dotnetcore
         script:
-          - echo "Manual Deployment CI/CD to PROD-release environment"
-          - export ASPNETCORE_ENVIRONMENT="Release"
-          - export ASPNETCORE_CLUSTER="Sandbox"
+          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
+          - echo "Deploy to SB-Preprod"
+          - export ASPNETCORE_ENVIRONMENT="Preprod"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Release 
-          - dotnet publish $PROJECT_NAME --configuration Release 
-          - echo "Uploading Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - dotnet build $PROJECT_NAME --configuration Preprod
+          - dotnet publish $PROJECT_NAME --configuration Preprod
+          - echo "Uploading to Server"
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Preprod/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PRWS@$SSH_SERVER_SBBS1:$PRWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_PRWS@$SSH_SERVER_SBBS1:$PRWS_PUBDIR$FTP_ROOTDIR_WS
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
+          - sleep 10
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-          - echo "Updating DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_PROD $FTP_DEPLOYDIR builddate.txt
     deploy-prod-alpha-pub-ppids:
     - variables:
       - name: ServerId
@@ -178,6 +195,18 @@ pipelines:
           - dotnet restore
           - dotnet build $PROJECT_NAME --configuration Sandbox 
           - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
+    preprod:
+    # pre production push-merge build 
+    - step:
+        name: Deploy to pre-production
+        caches:
+          - dotnetcore
+        script:
+          - echo "Auto Deployment CI/CD to PROD-release environment"
+          - export ASPNETCORE_ENVIRONMENT="Release"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Release
+          - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"		  		  
     release:
     # production push-merge build 
     - step:

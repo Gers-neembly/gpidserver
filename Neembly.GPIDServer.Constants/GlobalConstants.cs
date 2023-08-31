@@ -24,6 +24,7 @@
         public const string ApiClientId = "Neembly.PlayerPortalApi.Services";
         public const string AuthTypePassword = "passwordGrant";
         public const string AuthTypeClientCredentials = "clientCredentials";
+        public const string AuthTypeGrantCode = "grantCode";
         #endregion
 
         #region Token Provider
