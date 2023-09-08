@@ -6,6 +6,7 @@ using Neembly.GPIDServer.WebAPI.Interface;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Neembly.GPIDServer.WebAPI.Services
 {
@@ -31,8 +32,10 @@ namespace Neembly.GPIDServer.WebAPI.Services
                     options.Scope.Add(telegramProviders.Scope);
                     options.Events.OnRedirectToAuthorizationEndpoint = context =>
                     {
-                            context.Response.Redirect(context.RedirectUri + $"&bot_id={telegramProviders.Bot_Id}&public_key={telegramProviders.Public_Key}&nonce={telegramProviders.Nonce}"); 
-                            return Task.CompletedTask;
+                        var urlOrigin = HttpUtility.ParseQueryString(context.Request.QueryString.ToString()).Get("returnUrl");
+                        if (string.IsNullOrEmpty(urlOrigin)) urlOrigin = context.Request.Headers["origin"].ToString();
+                        context.Response.Redirect(context.RedirectUri + $"&bot_id={telegramProviders.Bot_Id}&public_key={telegramProviders.Public_Key}&nonce={telegramProviders.Nonce}&origin={urlOrigin}");
+                        return Task.CompletedTask;
                     };
                 });
             }
