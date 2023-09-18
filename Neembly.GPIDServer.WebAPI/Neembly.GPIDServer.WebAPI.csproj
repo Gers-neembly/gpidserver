@@ -44,4 +44,6 @@
     <ProjectReference Include="..\Neembly.GPIDServer.Security\Neembly.GPIDServer.Security.OAuth.Telegram\Neembly.GPIDServer.Security.OAuth.Telegram.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1Sandbox_1json__JSONSchema="" /></VisualStudio></ProjectExtensions>
+
 </Project>

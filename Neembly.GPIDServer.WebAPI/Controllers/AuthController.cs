@@ -65,7 +65,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
             await HttpContext.SignOutAsync();
-            RemoveCookie("Winka.Identity.Cookie");
+            RemoveCookie("IdServer.GP.Identity.Cookie");
             RemoveCookie("idsrv.external");
             RemoveCookie("idsrv.session");
             return Ok(true);
@@ -77,7 +77,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             if (token == "winkaprop239")
             {
-                RemoveCookie("Winka.Identity.Cookie");
+                RemoveCookie("IdServer.GP.Identity.Cookie");
                 RemoveCookie("idsrv.external");
                 RemoveCookie("idsrv.session");
             }
