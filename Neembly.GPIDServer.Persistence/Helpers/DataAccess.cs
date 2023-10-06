@@ -81,7 +81,7 @@ namespace Neembly.GPIDServer.Persistence.Helpers
         public async Task<AppUser> GetAppUser(string username)
         {
             return await _appDBContext.Users
-                .Where(u => u.UserName == username)
+                .Where(u => u.UserName.ToLower() == username.ToLower())
                 .FirstOrDefaultAsync();
         }
 
