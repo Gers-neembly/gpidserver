@@ -19,7 +19,7 @@ pipelines:
           - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
           - dotnet build
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
-    deploy-dev:
+    deploy-dev-scp:
     - step:
         name: Deploy to DEV-test
         deployment: test
@@ -29,18 +29,20 @@ pipelines:
           - echo "Manual deploy to DEV-test environment"
           - export ASPNETCORE_ENVIRONMENT="Development"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Debug 
-          - dotnet publish $PROJECT_NAME --configuration Debug 
+          - dotnet build $PROJECT_NAME --configuration Debug
+          - dotnet publish $PROJECT_NAME --configuration Debug
           - echo "Uploading to Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
+          - sleep 10
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-          - echo "Updating DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $FTP_USERNAME -p $FTP_PASSWORD $FTP_URL_DEVTEST $FTP_DEPLOYDIR builddate.txt
     deploy-sb-ws:
     - variables:
       - name: ServerId
@@ -69,6 +71,7 @@ pipelines:
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
           - sleep 10
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
@@ -94,12 +97,13 @@ pipelines:
           - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_PRWS@$SSH_SERVER_SBBS1:$PRWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 10s
           - echo "Restarting Service"
-          - ssh $SSH_USER_PRWS@$SSH_SERVER_SBBS1 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
           - sleep 10
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-    deploy-prod-alpha-pub-ppids:
+    deploy-prod-alpha-pub:
     - variables:
       - name: ServerId
       - name: Password 		  
@@ -136,6 +140,45 @@ pipelines:
           - echo "Uploading DateMarker"
           - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
           - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_DEPLOYDIR builddate.txt
+    deploy-prod-alpha-scp:
+    - variables:
+      - name: ServerId
+      - name: Password 		  
+      - name: VersionNo
+    - step:
+        name: Deploy ProdAlpha
+        deployment: production
+        caches:
+          - dotnetcore
+        script:
+          - echo $ServerId
+          - if [ "$Password" != "$PROD_VAR_PASSWORD" ]; then exit 1 ; fi
+          - if [ "$ServerId" = "1" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_PUBWS1 ; fi
+          - if [ "$ServerId" = "2" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_PUBWS2 ; fi
+          - echo $SSH_SERVER_PUBWS
+          - if [ "$SSH_SERVER_PUBWS" == "" ]; then exit 1 ; fi
+          - if [ "$VersionNo" = "" ]; then export VERSION_NUMBER=$BUILD_VERSION ; else export VERSION_NUMBER=$VersionNo ; fi
+          - echo $VERSION_NUMBER
+          - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
+          - echo "IP Address"
+          - curl ifconfig.me
+          - export ASPNETCORE_ENVIRONMENT="Release"
+          - export ASPNETCORE_CLUSTER="ClusterAlpha"
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
+          - dotnet publish $PROJECT_NAME --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
+          - echo "Uploading Server"
+          - apt-get update && apt-get -y -qq install openssh-client curl
+          - scp -r $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
+          - sleep 10
+          - echo "Updating Database"
+          - cd $DB_PROJECT_DIR
+          - dotnet ef database update
     deploy-prod-alpha-database-ppids:
     - step:
         name: Deploy DB ProdAlpha

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.SharedServices.Helpers;
 using Neembly.GPIDServer.SharedServices.Interfaces;
+using Neembly.GPIDServer.SharedServices.SSO;
 
 namespace Neembly.GPIDServer.SharedServices
 {
@@ -15,6 +16,10 @@ namespace Neembly.GPIDServer.SharedServices
         {
             //player net
             services.AddScoped<IPlayerNetService, PlayerNetService>();
+
+            //SSO 
+            services.AddScoped<ISSOClaimsService, SSOClaimsService>();
+            services.AddScoped<ISSOPlayerService, SSOPlayerService>();
 
             //token provider
             services.AddScoped<ITokenProviderService, TokenProviderService>();
