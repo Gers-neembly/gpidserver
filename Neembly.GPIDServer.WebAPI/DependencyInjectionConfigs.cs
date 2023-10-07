@@ -6,8 +6,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Neembly.GPIDServer.Persistence;
 using Neembly.GPIDServer.Persistence.Entities;
+using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.WebAPI.Filters;
+using Neembly.GPIDServer.WebAPI.Interface;
 using Neembly.GPIDServer.WebAPI.Models.Configs;
+using Neembly.GPIDServer.WebAPI.Queries;
+using Neembly.GPIDServer.WebAPI.Services;
+using System;
 
 namespace Neembly.GPIDServer.WebAPI
 {
@@ -20,6 +25,13 @@ namespace Neembly.GPIDServer.WebAPI
         /// <returns></returns>
         public static IServiceCollection Add(this IServiceCollection services, IConfiguration configuration)
         {
+            var paramList = Environment.GetCommandLineArgs();
+
+            int offset = Array.FindIndex(paramList, m => m == "--webname");
+            string webname = string.Empty;
+            if (offset >= 0) webname = paramList[offset + 1];
+
+            Console.WriteLine($"Loading Webname : {webname}");
             //application database context
             services.AddDbContext<AppDBContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
@@ -37,10 +49,21 @@ namespace Neembly.GPIDServer.WebAPI
                 .AddEntityFrameworkStores<AppDBContext>()
                 .AddDefaultTokenProviders();
 
+            services.ConfigureApplicationCookie(config =>
+            {
+                config.Cookie.Name = "IdServer.GP.Identity.Cookie";
+                config.LoginPath = "/Auth/Login";
+            });
+
             //authentication client config
             var authClientConfig = new AuthClientConfiguration();
             configuration.Bind("AuthClientConfiguration", authClientConfig);
             services.AddSingleton(authClientConfig);
+
+            //user details informatrion config
+            var userDetailConfiguration = new UserDetailConfiguration();
+            configuration.Bind("UserDetailConfiguration", userDetailConfiguration);
+            services.AddSingleton(userDetailConfiguration);
 
             //add identity server
             services.AddIdentityServer()
@@ -59,11 +82,21 @@ namespace Neembly.GPIDServer.WebAPI
             //add cross origin
             services.AddCors();
 
+            // Auth Collection
+            services.AddTransient<IOperatorSSOQueries, OperatorSSOQueries>();
+
+            // add authentications
+            services.AddAuthentication()
+                    .AddGoogleAuth(services, webname)
+                    .AddFacebookAuth(services, webname)
+                    .AddTelegramAuth(services, webname);
+
             //mvc services
             services.AddMvc(options => 
                         options.Filters.Add(typeof(CustomExceptionFilterAttribute)))
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddFluentValidation(fv => fv.RegisterValidatorsFromAssembly(typeof(Exceptions.ValidationException).Assembly));
+
 
             return services;
         }
