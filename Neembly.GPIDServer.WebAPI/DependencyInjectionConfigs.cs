@@ -51,7 +51,7 @@ namespace Neembly.GPIDServer.WebAPI
 
             services.ConfigureApplicationCookie(config =>
             {
-                config.Cookie.Name = "Winka.Identity.Cookie";
+                config.Cookie.Name = "IdServer.GP.Identity.Cookie";
                 config.LoginPath = "/Auth/Login";
             });
 
