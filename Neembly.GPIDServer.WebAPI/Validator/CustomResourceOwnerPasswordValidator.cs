@@ -36,7 +36,9 @@ namespace Neembly.GPIDServer.WebAPI.Validator
             string ssoAuthProvider = context.Request.Raw["ssoAuthProvider"];
             string userName = $"{context.UserName}_{operatorId}";
             AppUser user = null;
-            if (string.IsNullOrEmpty(email))
+            if (this.IsValidEmail(context.UserName))
+                user = _context.Users.Where(p => p.Email.ToLower() == context.UserName.ToLower() && p.OperatorId == Convert.ToInt32(operatorId)).FirstOrDefault();
+            else if (string.IsNullOrEmpty(email))
                 user = _context.Users.Where(p => p.UserName.ToLower() == userName.ToLower()).FirstOrDefault();
             else
                 user = _context.Users.Where(p => p.UserName.ToLower() == userName.ToLower()
@@ -64,6 +66,19 @@ namespace Neembly.GPIDServer.WebAPI.Validator
             }
             context.Result = new GrantValidationResult(TokenRequestErrors.InvalidGrant, "The username and password do not match", null);
             return Task.FromResult(context.Result);
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
