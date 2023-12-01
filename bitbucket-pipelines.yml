@@ -21,6 +21,9 @@ pipelines:
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
     deploy-dev-scp:
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy to DEV-test
         deployment: test
         caches:
