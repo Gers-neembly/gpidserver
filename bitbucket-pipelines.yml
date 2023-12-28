@@ -22,10 +22,10 @@ pipelines:
     runner-dev-all:
     - variables:
       - name: ServerId
-        description: Enter ServerId (1 or 2) to access
-      - name: DeployDB
-        description: Do you like to perform DB Migration
+        description: Enter ServerId (1 or 2) to access		
+	  - name: DeployDB
         default: No 	  
+        description: Do you like to perform DB Migration
         allowed-values:
         - Yes
         - No
@@ -40,7 +40,6 @@ pipelines:
           - echo "Manual deploy to DEV-test environment..."
           - export ASPNETCORE_ENVIRONMENT="Development"
           - echo $ServerId
-          - echo $DeployDB
           - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
           - if [ "$ServerId" = "1" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
           - if [ "$ServerId" = "2" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
@@ -60,7 +59,7 @@ pipelines:
           - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-pp-auth.service'
           - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
           - sleep 10
-          - if [ "$DeployDB" != "Yes" ]; then exit 1 ; fi
+          - if [ "$DeployDB" = "false" ]; then exit 1 ; fi
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
