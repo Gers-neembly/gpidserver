@@ -32,6 +32,9 @@ pipelines:
       - name: Password 	
         description: Enter password to proceed		
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy to DEV-test
         deployment: test
         caches:
