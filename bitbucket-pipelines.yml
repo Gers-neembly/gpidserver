@@ -41,7 +41,7 @@ pipelines:
           - dotnetcore
         script:
           - su runner
-          - cd ~
+          - whoami
           - echo "Manual deploy to DEV-test environment..."
           - export ASPNETCORE_ENVIRONMENT="Development"
           - echo $ServerId
@@ -57,7 +57,6 @@ pipelines:
           - dotnet build $PROJECT_NAME --configuration $SSH_SERVER_MODE
           - dotnet publish $PROJECT_NAME --configuration $SSH_SERVER_MODE
           - echo "Uploading to Server"
-          - whoami
           - scp -r $DOTNET_BUILD_DIR/bin/$SSH_SERVER_MODE/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS:$DEVWS_PUBDIR$FTP_ROOTDIR
           - scp -r $DOTNET_BUILD_DIR/*.json $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS:$DEVWS_PUBDIR$FTP_ROOTDIR
           - sleep 10s
