@@ -23,6 +23,12 @@ pipelines:
     - variables:
       - name: ServerId
         description: Enter ServerId (1 or 2) to access		
+	  - name: DeployDB
+        default: No 	  
+        description: Do you like to perform DB Migration
+        allowed-values:
+        - Yes
+        - No
       - name: Password 	
         description: Enter password to proceed		
     - step:
@@ -35,8 +41,8 @@ pipelines:
           - export ASPNETCORE_ENVIRONMENT="Development"
           - echo $ServerId
           - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
-          - if [ "$ServerId" = "1"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
-          - if [ "$ServerId" = "2"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
+          - if [ "$ServerId" = "1" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
+          - if [ "$ServerId" = "2" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
           - echo $SSH_SERVER_PUBWS
           - export SSH_SERVER_PUB_USER=$SSH_USER_DEVWS
           - export SSH_SERVER_MODE="Debug"
@@ -53,30 +59,7 @@ pipelines:
           - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-pp-auth.service'
           - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
           - sleep 10
-          - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-    runner-dev-database:
-    - step:
-        name: Deploy to DEV-test
-        deployment: test
-        caches:
-          - dotnetcore
-        script:
-          - echo "Manual deploy to DEV-test environment"
-          - export ASPNETCORE_ENVIRONMENT="Development"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Debug
-          - dotnet publish $PROJECT_NAME --configuration Debug
-          - echo "Uploading to Server"
-          - apt-get update && apt-get -y -qq install openssh-client curl
-          - scp -r $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
-          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
-          - sleep 10s
-          - echo "Restarting Service"
-          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
-          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
-          - sleep 10
+          - if [ "$DeployDB" != "Yes" ]; then exit 1 ; fi
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
