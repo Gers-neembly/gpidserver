@@ -40,6 +40,8 @@ pipelines:
         caches:
           - dotnetcore
         script:
+          - su runner
+          - cd ~
           - echo "Manual deploy to DEV-test environment..."
           - export ASPNETCORE_ENVIRONMENT="Development"
           - echo $ServerId
