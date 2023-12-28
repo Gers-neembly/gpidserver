@@ -41,10 +41,10 @@ pipelines:
           - export ASPNETCORE_ENVIRONMENT=$Environment
           - echo $ServerId
           - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
-          - if [ "$ServerId" = "1" && "$Environment" = "Development"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
-          - if [ "$ServerId" = "1" && "$Environment" = "Sandbox"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_SBWS1 ; fi
-          - if [ "$ServerId" = "2" && "$Environment" = "Development"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
-          - if [ "$ServerId" = "2" && "$Environment" = "Sandbox"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_SBWS2 ; fi
+          - if [ "$ServerId" = "1" AND "$Environment" = "Development"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
+          - if [ "$ServerId" = "1" AND "$Environment" = "Sandbox"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_SBWS1 ; fi
+          - if [ "$ServerId" = "2" AND "$Environment" = "Development"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
+          - if [ "$ServerId" = "2" AND "$Environment" = "Sandbox"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_SBWS2 ; fi
           - if [ "$Environment" = "Development"]; then export SSH_SERVER_PUB_USER=$SSH_USER_DEVWS ; fi
           - if [ "$Environment" = "Sandbox"]; then export SSH_SERVER_PUB_USER=$SSH_USER_SBWS ; fi
           - if [ "$Environment" = "Development"]; then export SSH_SERVER_MODE="Debug" ; fi
