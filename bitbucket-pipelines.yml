@@ -59,7 +59,7 @@ pipelines:
           - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-pp-auth.service'
           - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
           - sleep 10
-          - if [ "$DeployDB" = "false" ]; then exit 1 ; fi
+          - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
