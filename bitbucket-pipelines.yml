@@ -40,6 +40,7 @@ pipelines:
           - echo "Manual deploy to $Environment environment..."
           - export ASPNETCORE_ENVIRONMENT=$Environment
           - echo $ServerId
+          - echo $Environment
           - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
           - if [ "$ServerId" = "1" AND "$Environment" = "Development"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
           - if [ "$ServerId" = "1" AND "$Environment" = "Sandbox"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_SBWS1 ; fi
