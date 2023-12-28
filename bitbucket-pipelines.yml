@@ -40,6 +40,7 @@ pipelines:
           - echo "Manual deploy to DEV-test environment..."
           - export ASPNETCORE_ENVIRONMENT="Development"
           - echo $ServerId
+          - echo $DeployDB
           - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
           - if [ "$ServerId" = "1" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
           - if [ "$ServerId" = "2" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
