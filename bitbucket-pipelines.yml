@@ -37,8 +37,6 @@ pipelines:
           - linux.shell    
         name: Deploy to DEV-test
         deployment: test
-        caches:
-          - dotnetcore
         script:
           - whoami
           - echo "Manual deploy to DEV-test environment..."
