@@ -21,12 +21,6 @@ pipelines:
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
     runner-dev-all:
     - variables:
-      - name: Environment
-        default: Development
-        description: Select the Environment
-        allowed-values:
-        - Development
-        - Sandbox
       - name: ServerId
         description: Enter ServerId (1 or 2) to access		
       - name: Password 	
@@ -37,19 +31,14 @@ pipelines:
         caches:
           - dotnetcore
         script:
-          - echo "Manual deploy to $Environment environment..."
-          - export ASPNETCORE_ENVIRONMENT=$Environment
+          - echo "Manual deploy to DEV-test environment..."
+          - export ASPNETCORE_ENVIRONMENT="Development"
           - echo $ServerId
-          - echo $Environment
           - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
-          - if [ "$ServerId" = "1" AND "$Environment" = "Development"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
-          - if [ "$ServerId" = "1" AND "$Environment" = "Sandbox"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_SBWS1 ; fi
-          - if [ "$ServerId" = "2" AND "$Environment" = "Development"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
-          - if [ "$ServerId" = "2" AND "$Environment" = "Sandbox"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_SBWS2 ; fi
-          - if [ "$Environment" = "Development"]; then export SSH_SERVER_PUB_USER=$SSH_USER_DEVWS ; fi
-          - if [ "$Environment" = "Sandbox"]; then export SSH_SERVER_PUB_USER=$SSH_USER_SBWS ; fi
-          - if [ "$Environment" = "Development"]; then export SSH_SERVER_MODE="Debug" ; fi
-          - if [ "$Environment" = "Sandbox"]; then export SSH_SERVER_MODE="Sandbox" ; fi
+          - if [ "$ServerId" = "1"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
+          - if [ "$ServerId" = "2"]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
+          - export SSH_SERVER_PUB_USER=$SSH_USER_DEVWS
+          - export SSH_SERVER_MODE="Debug"
           - echo $SSH_SERVER_PUBWS
           - echo $SSH_SERVER_PUB_USER
           - echo $SSH_SERVER_MODE
