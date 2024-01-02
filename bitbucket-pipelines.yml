@@ -206,8 +206,9 @@ pipelines:
   default:
     # task per ticket item build
     - step:
-        caches:
-          - dotnetcore
+        runs-on:
+          - self.hosted
+          - linux.shell    
         script:
           - echo "Branch building..."
           - dotnet restore
