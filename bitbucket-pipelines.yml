@@ -19,6 +19,52 @@ pipelines:
           - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
           - dotnet build
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
+    runner-dev-all:
+    - variables:
+      - name: ServerId
+        description: Enter ServerId (1 or 2) to access
+      - name: DeployDB
+        default: No 	  
+        description: Do you like to perform DB Migration
+        allowed-values:
+        - Yes
+        - No
+      - name: Password 	
+        description: Enter password to proceed		
+    - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
+        name: Deploy to DEV-test
+        deployment: test
+        script:
+          - whoami
+          - echo "Manual deploy to DEV-test environment..."
+          - export ASPNETCORE_ENVIRONMENT="Development"
+          - echo $ServerId
+          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
+          - if [ "$ServerId" = "1" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
+          - if [ "$ServerId" = "2" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
+          - echo $SSH_SERVER_PUBWS
+          - export SSH_SERVER_PUB_USER=$SSH_USER_DEVWS
+          - export SSH_SERVER_MODE="Debug"
+          - echo $SSH_SERVER_PUB_USER
+          - echo $SSH_SERVER_MODE
+          - dotnet restore
+          - dotnet build $PROJECT_NAME --configuration $SSH_SERVER_MODE
+          - dotnet publish $PROJECT_NAME --configuration $SSH_SERVER_MODE
+          - echo "Uploading to Server"
+          - scp -rC $RUNNER_BUILD_DIR/bin/$SSH_SERVER_MODE/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -rC $RUNNER_BUILD_DIR/*.json $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - sleep 10s
+          - echo "Restarting Service"
+          - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-pp-auth.service'
+          - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
+          - sleep 10
+          - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
+          - echo "Updating Database"
+          - cd $DB_PROJECT_DIR
+          - dotnet ef database update
     deploy-dev-scp:
     - step:
         name: Deploy to DEV-test
@@ -103,43 +149,6 @@ pipelines:
           - echo "Updating Database"
           - cd $DB_PROJECT_DIR
           - dotnet ef database update
-    deploy-prod-alpha-pub:
-    - variables:
-      - name: ServerId
-      - name: Password 		  
-      - name: VersionNo
-    - step:
-        name: Deploy ProdAlpha
-        deployment: production
-        caches:
-          - dotnetcore
-        script:
-          - echo $ServerId
-          - if [ "$Password" != "$PROD_VAR_PASSWORD" ]; then exit 1 ; fi
-          - if [ "$ServerId" = "1" ]; then export FTP_URL_WS_PROD=$FTP_URL_WS1_PROD ; fi
-          - if [ "$ServerId" = "2" ]; then export FTP_URL_WS_PROD=$FTP_URL_WS2_PROD ; fi
-          - echo $FTP_URL_WS_PROD
-          - if [ "$FTP_URL_WS_PROD" == "" ]; then exit 1 ; fi
-          - if [ "$VersionNo" = "" ]; then export VERSION_NUMBER=$BUILD_VERSION ; else export VERSION_NUMBER=$VersionNo ; fi
-          - echo $VERSION_NUMBER
-          - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
-          - echo "IP Address"
-          - curl ifconfig.me
-          - export ASPNETCORE_ENVIRONMENT="Release"
-          - export ASPNETCORE_CLUSTER="ClusterAlpha"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
-          - dotnet publish $PROJECT_NAME --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
-          - echo "Uploading Server"
-          - apt-get update && apt-get -qq install ncftp
-          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*
-          - ncftpput -R -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_ROOTDIR $DOTNET_BUILD_DIR/*.json            
-          - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-          - echo "Uploading DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_DEPLOYDIR builddate.txt
     deploy-prod-alpha-scp:
     - variables:
       - name: ServerId
@@ -203,8 +212,9 @@ pipelines:
   default:
     # task per ticket item build
     - step:
-        caches:
-          - dotnetcore
+        runs-on:
+          - self.hosted
+          - linux.shell    
         script:
           - echo "Branch building..."
           - dotnet restore
