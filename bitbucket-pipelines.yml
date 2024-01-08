@@ -216,6 +216,7 @@ pipelines:
           - self.hosted
           - linux.shell    
         script:
+          - echo "Hosted Runner compilation..."
           - echo "Branch building..."
           - dotnet restore
           - dotnet build $PROJECT_NAME --configuration Debug
