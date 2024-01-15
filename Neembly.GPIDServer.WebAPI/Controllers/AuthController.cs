@@ -34,20 +34,16 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         {
             var queryString = HttpContext.Request.Query["returnUrl"].ToString();
             var username = HttpUtility.ParseQueryString(queryString).Get("username");
-            var ssoAuthProvider = HttpUtility.ParseQueryString(queryString).Get("ssoAuthProvider");
-            if (!string.IsNullOrEmpty(username))
-            {
-                if (await this.ValidateSignInCredentials(username, ssoAuthProvider))
-                    return Redirect(returnUrl);
-                 //   return View();
-                // this is another way
-                //var redirect_uri = HttpUtility.ParseQueryString(queryString).Get("redirect_uri");
-                // return Redirect(redirect_uri);
-            }
-            return Unauthorized();
+            if (await this.ValidateSignInCredentials(username))
+                return Redirect(returnUrl);
+            else
+                return Unauthorized();
+            // this is another way
+            //var redirect_uri = HttpUtility.ParseQueryString(queryString).Get("redirect_uri");
+            // return Redirect(redirect_uri);
         }
 
-        public void RemoveCookie(string key)
+    public void RemoveCookie(string key)
         {
             //Erase the data in the cookie
             CookieOptions option = new CookieOptions();
@@ -93,18 +89,16 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
-        private async Task<bool> ValidateSignInCredentials(string username, string ssoAuthProvider)
+        private async Task<bool> ValidateSignInCredentials(string username)
         {
             if (!string.IsNullOrEmpty(username))
             {
-                if (string.IsNullOrEmpty(ssoAuthProvider))
+                var appUser = await _dataAccess.GetAppUser(username);
+                if (appUser != null)
                 {
-                    var appUser = await _dataAccess.GetAppUser(username);
-                    if (appUser == null) return false;
                     await _signInManager.SignInAsync(appUser, false);
                     return true;
                 }
-                else return true;
             }
             return false;
         }
