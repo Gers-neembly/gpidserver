@@ -47,6 +47,7 @@ namespace Neembly.GPIDServer.SharedServices.SSO
                 playerRegister.Username = registerInfo.Username;
                 playerRegister.OperatorId = registerInfo.OperatorId;
                 playerRegister.SSOAuthProvider = registerInfo.AuthProvider;
+                playerRegister.RegistrationIPAddress = registerInfo.RegistrationIPAddress;
                 var result = await _playerNetService.PlayerSSORegister(_authTokenInfo, playerRegister);
                 return result;
             }
@@ -107,8 +108,10 @@ namespace Neembly.GPIDServer.SharedServices.SSO
                     PlayerId = ssoPlayerRegisterInfo.PlayerId,
                     Username = ssoPlayerRegisterInfo.Username,
                     OperatorId = ssoPlayerRegisterInfo.OperatorId,
-                    AuthProvider = ssoPlayerRegisterInfo.AuthProvider
+                    AuthProvider = ssoPlayerRegisterInfo.AuthProvider,
+                    RegistrationIPAddress = ssoPlayerRegisterInfo.RegistrationIPAddress
                 };
+
                 var registerResult = await this.RegisterPlayer(registerInfo, ssoPlayerRegisterInfo.UserClaimInfo);
                 if (registerResult)
                 {

@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using Neembly.GPIDServer.WebAPI.Models.Constants.SSO;
 using Neembly.GPIDServer.WebAPI.Models.oAuth;
 using Neembly.GPIDServer.Security.OAuth.Telegram;
+using System.Net;
+using System.Linq;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -114,6 +116,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 }
                 else
                 {
+                    string ipAddress = this.GetClientIpAddress();
                     playerId = await _dataAccess.GeneratePlayerId(displayUserName, userClaimInfo.Email, operatorId);
                     var ssoRegisterInfo = new SSOPlayerRegisterInfo
                     {
@@ -123,7 +126,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                         OperatorId = operatorId,
                         AuthProvider = authProvider,
                         AuthProviderClaim = authProviderClaim,
-                        UserClaimInfo = userClaimInfo
+                        UserClaimInfo = userClaimInfo,
+                        RegistrationIPAddress = ipAddress
                     };
                     canLogin = await _ssoPlayerService.CreateUserFromSSO(ssoRegisterInfo);
                 }
@@ -153,6 +157,28 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
             return UriHelper.Encode(new Uri(UriHelper.Encode(new Uri(redirectAddress))));
         }
+
+        #region
+        private string GetClientIpAddress()
+        {
+            IPAddress remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
+            string result = "";
+            if (remoteIpAddress != null)
+            {
+                // If we got an IPV6 address, then we need to ask the network for the IPV4 address 
+                // This usually only happens when the browser is on the same machine as the server.
+                if (remoteIpAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                {
+                    remoteIpAddress = Dns.GetHostEntry(remoteIpAddress).AddressList
+                                      .First(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                }
+                result = remoteIpAddress.ToString();
+            }
+            return result;
+        }
+        #endregion
+
+
 
         #endregion
 
