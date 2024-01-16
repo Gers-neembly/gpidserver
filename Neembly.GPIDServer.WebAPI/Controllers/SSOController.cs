@@ -161,20 +161,17 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #region
         private string GetClientIpAddress()
         {
-            IPAddress remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
-            string result = "";
-            if (remoteIpAddress != null)
+            var xForwardedFor = Request.Headers["X-Forwarded-For"];
+            string ipAddress = string.IsNullOrEmpty(xForwardedFor) ? Request.Headers["HTTP_X_FORWARDED_FOR"] : xForwardedFor;
+            if (!string.IsNullOrEmpty(ipAddress))
             {
-                // If we got an IPV6 address, then we need to ask the network for the IPV4 address 
-                // This usually only happens when the browser is on the same machine as the server.
-                if (remoteIpAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                var addresses = ipAddress.Split(',');
+                if (addresses.Length != 0)
                 {
-                    remoteIpAddress = Dns.GetHostEntry(remoteIpAddress).AddressList
-                                      .First(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                    return addresses[0];
                 }
-                result = remoteIpAddress.ToString();
             }
-            return result;
+            return Request.HttpContext.Connection.RemoteIpAddress.ToString();
         }
         #endregion
 
