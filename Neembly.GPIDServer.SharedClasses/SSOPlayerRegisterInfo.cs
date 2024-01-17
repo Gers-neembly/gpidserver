@@ -8,6 +8,7 @@
         public int OperatorId { get; set; }
         public string AuthProvider { get; set; }
         public string AuthProviderClaim { get; set; }
+        public string RegistrationIPAddress { get; set; }
         public SSOUserInfo UserClaimInfo { get; set; }
     }
 }

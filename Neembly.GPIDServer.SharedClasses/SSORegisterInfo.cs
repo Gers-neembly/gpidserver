@@ -6,5 +6,6 @@
         public string Username { get; set; }
         public int OperatorId { get; set; }
         public string AuthProvider { get; set; }
+        public string RegistrationIPAddress { get; set; }
     }
 }
