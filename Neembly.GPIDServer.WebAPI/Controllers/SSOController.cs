@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using Neembly.GPIDServer.WebAPI.Models.Constants.SSO;
 using Neembly.GPIDServer.WebAPI.Models.oAuth;
 using Neembly.GPIDServer.Security.OAuth.Telegram;
+using System.Net;
+using System.Linq;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -114,6 +116,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 }
                 else
                 {
+                    string ipAddress = this.GetClientIpAddress();
                     playerId = await _dataAccess.GeneratePlayerId(displayUserName, userClaimInfo.Email, operatorId);
                     var ssoRegisterInfo = new SSOPlayerRegisterInfo
                     {
@@ -123,7 +126,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                         OperatorId = operatorId,
                         AuthProvider = authProvider,
                         AuthProviderClaim = authProviderClaim,
-                        UserClaimInfo = userClaimInfo
+                        UserClaimInfo = userClaimInfo,
+                        RegistrationIPAddress = ipAddress
                     };
                     canLogin = await _ssoPlayerService.CreateUserFromSSO(ssoRegisterInfo);
                 }
@@ -153,6 +157,25 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
             return UriHelper.Encode(new Uri(UriHelper.Encode(new Uri(redirectAddress))));
         }
+
+        #region
+        private string GetClientIpAddress()
+        {
+            var xForwardedFor = Request.Headers["X-Forwarded-For"];
+            string ipAddress = string.IsNullOrEmpty(xForwardedFor) ? Request.Headers["HTTP_X_FORWARDED_FOR"] : xForwardedFor;
+            if (!string.IsNullOrEmpty(ipAddress))
+            {
+                var addresses = ipAddress.Split(',');
+                if (addresses.Length != 0)
+                {
+                    return addresses[0];
+                }
+            }
+            return Request.HttpContext.Connection.RemoteIpAddress.ToString();
+        }
+        #endregion
+
+
 
         #endregion
 

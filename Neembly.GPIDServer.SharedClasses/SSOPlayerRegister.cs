@@ -21,5 +21,6 @@
         public string BirthDate { get; set; }
         public string Gender { get; set; }
         public string PromoCode { get; set; }
+        public string RegistrationIPAddress { get; set; }
     }
 }
