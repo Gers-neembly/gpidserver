@@ -256,8 +256,8 @@ pipelines:
     - step:
         name: Deploy to pre-production
         caches:
-          - dotnetcorea
-        script:a
+          - dotnetcore
+        script:
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - dotnet restore
