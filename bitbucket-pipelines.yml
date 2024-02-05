@@ -105,6 +105,10 @@ pipelines:
           - if [ "$ServerId" = "2" ]; then export SSH_SERVER_SBWS=$SSH_SERVER_SBWS2 ; fi
           - echo $SSH_SERVER_SBWS
           - if [ "$SSH_SERVER_SBWS" = "" ]; then exit 1 ; fi
+          - if [ "$ServerId" = "1" ]; then export ENV_SB_TARGET="Sandbox" ; fi
+          - if [ "$ServerId" = "2" ]; then export ENV_SB_TARGET="Sandbox2" ; fi
+          - echo $ENV_SB_TARGET
+          - if [ "$ENV_SB_TARGET" = "" ]; then exit 1 ; fi
           - echo "Deploy to SB-WS"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
           - dotnet restore
@@ -114,8 +118,8 @@ pipelines:
           - apt-get update && apt-get -y -qq install openssh-client curl
           - scp -r $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
           - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - if [ "$ServerId" = "2" ]; then scp -r $DOTNET_BUILD_DIR/appsettings.Sandbox2.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json ; fi
-          - if [ "$ServerId" = "2" ]; then scp -r $DOTNET_DBSRC_DIR/connection.Sandbox2.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/connection.Sandbox.json ; fi
+          - scp -r $DOTNET_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json ; fi
+          - if [ "$ServerId" = "2" ]; then scp -r $DB_PROJECT_DIR/connection.$ENV_SB_TARGET.json $DB_PROJECT_DIR/connection.Sandbox.json ; fi
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service'
@@ -252,8 +256,8 @@ pipelines:
     - step:
         name: Deploy to pre-production
         caches:
-          - dotnetcore
-        script:
+          - dotnetcorea
+        script:a
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - dotnet restore
