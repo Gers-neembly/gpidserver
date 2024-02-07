@@ -121,8 +121,8 @@ pipelines:
           - apt-get update && apt-get -y -qq install openssh-client curl
           - scp -r $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
           - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $DOTNET_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json ; fi
-          - if [ "$ServerId" = "2" ]; then scp -r $DB_PROJECT_DIR/connection.$ENV_SB_TARGET.json $DB_PROJECT_DIR/connection.Sandbox.json ; fi
+          - scp -r $DOTNET_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json
+          -  if [ "$ServerId" = "2" ]; then scp -r $DB_PROJECT_DIR/connection.$ENV_SB_TARGET.json $DB_PROJECT_DIR/connection.Sandbox.json ; fi
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service'
