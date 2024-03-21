@@ -22,6 +22,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     [ApiController]
     public class SSOController : ControllerBase
     {
+        private bool createPlayerAccount = false;
         const string ssoReturnPath = "sso/";
         #region Member Variable
         private readonly IDataAccess _dataAccess;
@@ -101,6 +102,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
                 SSOUserInfo userClaimInfo = _ssoClaimsService.GetSSOUserInfo(this.User);
                 string displayUserName = userClaimInfo.Email;
+                string actionToTake = SSOConstants.ssoActions[(int) AuthSSOActionsToTake.createNew];
                 //string displayUserName = _ssoClaimsService.GenerateUsername(this.User); // this might come handy if needed
 
 
@@ -112,27 +114,44 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 {
                     displayUserName = emailAppUser.DisplayUsername;
                     playerId = emailAppUser.PlayerId;
-                    canLogin = await _ssoPlayerService.ProcessUserSSOClaim(authProviderClaim, emailAppUser);
-                }
-                else
-                {
-                    string ipAddress = this.GetClientIpAddress();
-                    playerId = await _dataAccess.GeneratePlayerId(displayUserName, userClaimInfo.Email, operatorId);
-                    var ssoRegisterInfo = new SSOPlayerRegisterInfo
+                    var ssoCheckDetails = await _ssoPlayerService.CheckSSODetails(new SSOCheckPlayerDetails
                     {
-                        Username = displayUserName,
+                        PlayerId = emailAppUser.PlayerId,
                         Email = userClaimInfo.Email,
-                        PlayerId = playerId,
-                        OperatorId = operatorId,
-                        AuthProvider = authProvider,
-                        AuthProviderClaim = authProviderClaim,
-                        UserClaimInfo = userClaimInfo,
-                        RegistrationIPAddress = ipAddress
-                    };
-                    canLogin = await _ssoPlayerService.CreateUserFromSSO(ssoRegisterInfo);
+                        OperatorId = operatorId
+                    });
+                    if (ssoCheckDetails.Result)
+                    {
+                        actionToTake = ssoCheckDetails.Action;
+                        canLogin = await _ssoPlayerService.ProcessUserSSOClaim(authProviderClaim, emailAppUser);
+                    }
+                }
+                else 
+                {
+                    if (createPlayerAccount)
+                    {
+                        string ipAddress = this.GetClientIpAddress();
+                        playerId = await _dataAccess.GeneratePlayerId(displayUserName, userClaimInfo.Email, operatorId);
+                        var ssoRegisterInfo = new SSOPlayerRegisterInfo
+                        {
+                            Username = displayUserName,
+                            Email = userClaimInfo.Email,
+                            PlayerId = playerId,
+                            OperatorId = operatorId,
+                            AuthProvider = authProvider,
+                            AuthProviderClaim = authProviderClaim,
+                            UserClaimInfo = userClaimInfo,
+                            RegistrationIPAddress = ipAddress
+                        };
+                        canLogin = await _ssoPlayerService.CreateUserFromSSO(ssoRegisterInfo);
+                    }
+                    else
+                        canLogin = true;
                 }
                 playerAuthResult.displayUserName = displayUserName;
                 playerAuthResult.playerId = playerId;
+                playerAuthResult.email = userClaimInfo.Email;
+                playerAuthResult.action = actionToTake;
                 playerAuthResult.result = canLogin;
             }
             catch (Exception ex)
@@ -148,12 +167,14 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             string urlReferer = Request.Headers["Referer"].ToString();
             if (urlReferer.ToLower().Contains(playerAuthResult.authProvider)) urlReferer = $"https://{returnUrl}/";
 
-            string  redirectAddress = $"{urlReferer}{ssoReturnPath}{playerAuthResult.authProvider}?tokenkey={playerAuthResult.tokenKey}";
+            var actionToTake = !playerAuthResult.result ? "failed" : playerAuthResult.action;
+
+            string redirectAddress = $"{urlReferer}{ssoReturnPath}{playerAuthResult.authProvider}?tokenkey={playerAuthResult.tokenKey}&email={playerAuthResult.email}";
 
             if (playerAuthResult.result)
                 redirectAddress = $"{redirectAddress}&username={playerAuthResult.displayUserName}&playerId={playerAuthResult.playerId}";
-            else
-                redirectAddress = $"{redirectAddress}&action=failed";
+
+            redirectAddress = $"{redirectAddress}&action={actionToTake}";
 
             return UriHelper.Encode(new Uri(UriHelper.Encode(new Uri(redirectAddress))));
         }
