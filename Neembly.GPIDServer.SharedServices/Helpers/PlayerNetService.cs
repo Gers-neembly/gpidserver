@@ -88,6 +88,35 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
         }
         #endregion
 
+        #region Player SSO Register
+        public async Task<SSOCheckDetailsResult> PlayerSSOCheckDetails(AuthTokenInfo authTokenInfo, SSOCheckPlayerDetails playerSSODetails)
+        {
+            SSOCheckDetailsResult checkDetailsResult = new SSOCheckDetailsResult { Action = string.Empty, Result = false };
+
+            try
+            {
+                var endpoint = $"api/sso/{playerSSODetails.OperatorId}/check-details";
+                var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiName }, new[] { authTokenInfo.ApiScope });
+                var SysHttpClient = HttpClientSender($"{endpoint}", authTokenInfo.ApiUrl, playerToken, TokenType.Header);
+                string urlAddress = $"{authTokenInfo.ApiUrl}/{endpoint}";
+                var jsonRequestString = JsonConvert.SerializeObject(playerSSODetails);
+                var content = new StringContent(jsonRequestString, Encoding.UTF8, "application/json");
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                HttpResponseMessage response = (await SysHttpClient.GetAsync(urlAddress));
+                var resultSuccess = response.IsSuccessStatusCode && (response.StatusCode == System.Net.HttpStatusCode.OK);
+                if (resultSuccess)
+                    checkDetailsResult.Action = await response.Content.ReadAsAsync<string>();
+                checkDetailsResult.Result = resultSuccess;
+                return checkDetailsResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Exception PlayerNetService.PlayerSSORegister", ex);
+                checkDetailsResult.Result = false;
+                return checkDetailsResult;
+            }
+        }
+        #endregion
 
         #region Player Status
         public async Task<bool> PlayerSetStatus(AuthTokenInfo authTokenInfo, PlayerStatusInfo playerStatus)
