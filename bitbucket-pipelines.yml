@@ -67,9 +67,6 @@ pipelines:
           - dotnet ef database update
     deploy-dev-scp:
     - step:
-        runs-on:
-          - self.hosted
-          - linux.shell    
         name: Deploy to DEV-test
         deployment: test
         caches:
