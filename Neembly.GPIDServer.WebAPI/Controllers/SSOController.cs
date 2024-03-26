@@ -118,7 +118,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                     {
                         PlayerId = emailAppUser.PlayerId,
                         Email = userClaimInfo.Email,
-                        OperatorId = operatorId
+                        OperatorId = operatorId,
+                        AuthProvider = authProvider
                     });
                     if (ssoCheckDetails.Result)
                     {
