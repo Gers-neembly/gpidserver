@@ -102,7 +102,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
                 var jsonRequestString = JsonConvert.SerializeObject(playerSSODetails);
                 var content = new StringContent(jsonRequestString, Encoding.UTF8, "application/json");
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                HttpResponseMessage response = (await SysHttpClient.GetAsync(urlAddress));
+                HttpResponseMessage response = (await SysHttpClient.PostAsync(urlAddress, content));
                 var resultSuccess = response.IsSuccessStatusCode && (response.StatusCode == System.Net.HttpStatusCode.OK);
                 if (resultSuccess)
                     checkDetailsResult.Action = await response.Content.ReadAsAsync<string>();
