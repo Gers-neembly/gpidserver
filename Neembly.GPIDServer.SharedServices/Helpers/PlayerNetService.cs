@@ -105,7 +105,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
                 HttpResponseMessage response = (await SysHttpClient.PostAsync(urlAddress, content));
                 var resultSuccess = response.IsSuccessStatusCode && (response.StatusCode == System.Net.HttpStatusCode.OK);
                 if (resultSuccess)
-                    checkDetailsResult.Action = await response.Content.ReadAsAsync<string>();
+                    return await response.Content.ReadAsAsync<SSOCheckDetailsResult>();
                 checkDetailsResult.Result = resultSuccess;
                 return checkDetailsResult;
             }
