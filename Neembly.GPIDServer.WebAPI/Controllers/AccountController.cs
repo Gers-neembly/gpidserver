@@ -203,6 +203,22 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         }
         #endregion
 
+        #region  Verify Email 
+        [Route("{operatorId}/verify-password")]
+        [HttpGet]
+        public async Task<IActionResult> VerifyPassword(int operatorId, string email, string password)
+        {
+            bool passwordOk = false;
+            AppUser appUser = null;
+            if (!string.IsNullOrEmpty(email))
+                appUser = await _dataAccess.GetAppUserOnOperator(email, operatorId);
+            if (appUser == null)
+                return BadRequest(GlobalConstants.ErrPlayerAccountNotExisting);
+            passwordOk = await _userManager.CheckPasswordAsync(appUser, password);
+            return Ok(passwordOk);
+        }
+        #endregion
+
         #region Create User Roles
         private async Task CreateUserRoles(AppUser user, string roleDesired)
         {
