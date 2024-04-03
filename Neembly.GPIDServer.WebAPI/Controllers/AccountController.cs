@@ -13,6 +13,7 @@ using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Outputs;
+using Neembly.GPIDServer.WebAPI.Models.Constants.SSO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -154,6 +155,16 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
+
+                // Process SSO Auth as Claims if any
+                if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+                {
+                    Enum.TryParse(registerInfo.SSOAuthProvider.ToLower(), out AuthSSOSupported authSSOName);
+                    string authProvider = SSOConstants.validSSOAuthenticator[(int)authSSOName];
+                    string authProviderClaim = SSOConstants.authenticatorClaims[(int)authSSOName];
+                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(authProviderClaim, "true"));
+                }
+
 
                 if (registerInfo.Roles != null)
                 {
