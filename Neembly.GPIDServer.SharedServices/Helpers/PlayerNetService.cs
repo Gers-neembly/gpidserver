@@ -96,7 +96,7 @@ namespace Neembly.GPIDServer.SharedServices.Helpers
             try
             {
                 var endpoint = $"api/sso/{playerSSODetails.OperatorId}/check-details";
-                var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiName }, new[] { authTokenInfo.ApiScope });
+                var playerToken = await _identityServerTools.IssueClientJwtAsync(authTokenInfo.ClientId, authTokenInfo.LifeTime, new[] { authTokenInfo.ApiScope }, new[] { authTokenInfo.ApiName });
                 var SysHttpClient = HttpClientSender($"{endpoint}", authTokenInfo.ApiUrl, playerToken, TokenType.Header);
                 string urlAddress = $"{authTokenInfo.ApiUrl}/{endpoint}";
                 var jsonRequestString = JsonConvert.SerializeObject(playerSSODetails);
