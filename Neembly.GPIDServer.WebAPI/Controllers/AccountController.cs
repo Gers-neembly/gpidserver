@@ -135,9 +135,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 registerInfo.Password = $"{newPlayerId}_{registerInfo.UserName}";
 
             if (user != null)
-                {
+            {
                     userId = user.Id;
-                }
+            }
             else
             {
                 user = new AppUser { UserName = userName, Email = registerInfo.Email,
