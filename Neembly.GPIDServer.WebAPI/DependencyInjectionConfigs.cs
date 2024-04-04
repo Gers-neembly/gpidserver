@@ -91,7 +91,7 @@ namespace Neembly.GPIDServer.WebAPI
                     .AddCookie(options =>
                     {
                         options.LoginPath = "/Auth/Login";
-                        options.LogoutPath = "/Auth/AccessDenied";
+                        options.AccessDeniedPath = "/Auth/AccessDenied";
                     })
                     .AddGoogleAuth(services, webname)
                     .AddFacebookAuth(services, webname)
