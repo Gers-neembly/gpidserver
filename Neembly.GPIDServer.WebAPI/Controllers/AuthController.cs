@@ -43,7 +43,14 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             // return Redirect(redirect_uri);
         }
 
-    public void RemoveCookie(string key)
+        [HttpGet]
+        public IActionResult AccessDenied(string returnUrl)
+        {
+            var redirectUrl = $"{returnUrl}?action=Cancel";
+             return Redirect(redirectUrl);
+        }
+
+        public void RemoveCookie(string key)
         {
             //Erase the data in the cookie
             CookieOptions option = new CookieOptions();
