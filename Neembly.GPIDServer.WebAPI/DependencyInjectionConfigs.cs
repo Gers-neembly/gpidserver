@@ -53,6 +53,7 @@ namespace Neembly.GPIDServer.WebAPI
             {
                 config.Cookie.Name = "IdServer.GP.Identity.Cookie";
                 config.LoginPath = "/Auth/Login";
+                config.AccessDeniedPath = "/Auth/AccessDenied";
             });
 
             //authentication client config
