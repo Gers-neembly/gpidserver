@@ -25,7 +25,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
                     options.ClientSecret = googleProviders.Client_Secret;
                     options.Events.OnRemoteFailure = context =>
                     {
-                        context.Response.Redirect("/Auth/AccessDenied");
+                        context.Response.Redirect("Auth/AccessDenied?oAuth=Google");
                         context.HandleResponse();
                         return Task.CompletedTask;
                     };
