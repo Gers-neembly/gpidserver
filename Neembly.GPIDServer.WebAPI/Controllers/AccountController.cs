@@ -116,7 +116,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             string urlReferer = Request.Headers["Origin"].ToString();
             string userName = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
 
-            if (!registerInfo.BoUser)
+            if ((!registerInfo.BoUser) && (string.IsNullOrEmpty(registerInfo.SSOAuthProvider)))
             {
                 if (registerInfo.Password != registerInfo.ConfirmPassword)
                     return BadRequest(GlobalConstants.ErrPasswordsMismatch);
@@ -131,10 +131,13 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             int newPlayerId = await _dataAccess.GeneratePlayerId(userName,  registerInfo.Email, registerInfo.OperatorId);
             registerInfo.PlayerId = newPlayerId;
 
+            if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+                registerInfo.Password = $"{newPlayerId}_{registerInfo.UserName}";
+
             if (user != null)
-                {
+            {
                     userId = user.Id;
-                }
+            }
             else
             {
                 user = new AppUser { UserName = userName, Email = registerInfo.Email,
