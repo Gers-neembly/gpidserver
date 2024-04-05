@@ -49,15 +49,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public IActionResult AccessDenied(string returnUrl)
         {
             var authProvider = HttpContext.Request.Query["oAuth"].ToString();
-
             string urlReferer = Request.Headers["Referer"].ToString();
-
-            if (!string.IsNullOrEmpty(urlReferer))
-            {
-                if (urlReferer.ToLower().Contains(returnUrl)) urlReferer = string.Empty;
-                if (!string.IsNullOrEmpty(urlReferer))
-                    return Redirect($"{urlReferer}?action=cancel");
-            }
             var responseContent = $"<html><center><h2>{urlReferer}<br><br>{authProvider} Login Cancelled <br><br> Close window to go back</h2></center></html>";
             return Content(responseContent, "text/html");
         }
