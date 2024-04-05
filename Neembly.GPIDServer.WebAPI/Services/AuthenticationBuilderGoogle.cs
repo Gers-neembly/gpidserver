@@ -23,6 +23,12 @@ namespace Neembly.GPIDServer.WebAPI.Services
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.ClientId = googleProviders.Client_Id;
                     options.ClientSecret = googleProviders.Client_Secret;
+                    options.Events.OnRemoteFailure = context =>
+                    {
+                        context.Response.Redirect("/Auth/AccessDenied");
+                        context.HandleResponse();
+                        return Task.CompletedTask;
+                    };
                     options.Events.OnRedirectToAuthorizationEndpoint = context =>
                     {
                         context.Response.Redirect(context.RedirectUri + "&prompt=select_account consent"); //also, &prompt=select_account
