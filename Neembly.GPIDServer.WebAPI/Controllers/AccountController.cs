@@ -132,7 +132,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             registerInfo.PlayerId = newPlayerId;
 
             if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+            {
+                // this is only a filler...auto password for SSO 
                 registerInfo.Password = $"{newPlayerId}_{registerInfo.UserName}";
+                registerInfo.Password = registerInfo.Password.Length > 20 ? registerInfo.Password.Substring(0, 19) : registerInfo.Password;
+            }
 
             if (user != null)
             {
