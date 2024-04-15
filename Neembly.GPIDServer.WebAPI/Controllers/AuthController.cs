@@ -8,6 +8,8 @@ using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -43,7 +45,16 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             // return Redirect(redirect_uri);
         }
 
-    public void RemoveCookie(string key)
+        [HttpGet]
+        public IActionResult AccessDenied(string returnUrl)
+        {
+            var authProvider = HttpContext.Request.Query["oAuth"].ToString();
+            string urlReferer = Request.Headers["Referer"].ToString();
+            var responseContent = $"<html><center><h2>{urlReferer}<br><br>{authProvider} Login Cancelled <br><br> Close window to go back</h2></center></html>";
+            return Content(responseContent, "text/html");
+        }
+
+        public void RemoveCookie(string key)
         {
             //Erase the data in the cookie
             CookieOptions option = new CookieOptions();

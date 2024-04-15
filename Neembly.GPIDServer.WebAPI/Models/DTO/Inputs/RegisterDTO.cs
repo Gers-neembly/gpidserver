@@ -16,5 +16,6 @@ namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
         public PlayerInfo PlayerInfo { get; set; }
         public bool BoUser { get; set; }
         public int PlayerId { get; set; }
+        public string SSOAuthProvider { get; set; }
     }
 }

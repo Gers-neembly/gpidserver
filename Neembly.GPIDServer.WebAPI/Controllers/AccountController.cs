@@ -13,6 +13,7 @@ using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 using Neembly.GPIDServer.WebAPI.Filters;
 using Neembly.GPIDServer.WebAPI.Models.DTO.Outputs;
+using Neembly.GPIDServer.WebAPI.Models.Constants.SSO;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -115,7 +116,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             string urlReferer = Request.Headers["Origin"].ToString();
             string userName = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
 
-            if (!registerInfo.BoUser)
+            if ((!registerInfo.BoUser) && (string.IsNullOrEmpty(registerInfo.SSOAuthProvider)))
             {
                 if (registerInfo.Password != registerInfo.ConfirmPassword)
                     return BadRequest(GlobalConstants.ErrPasswordsMismatch);
@@ -130,10 +131,17 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             int newPlayerId = await _dataAccess.GeneratePlayerId(userName,  registerInfo.Email, registerInfo.OperatorId);
             registerInfo.PlayerId = newPlayerId;
 
+            if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+            {
+                // this is only a filler...auto password for SSO 
+                registerInfo.Password = $"{newPlayerId}_{registerInfo.UserName}";
+                registerInfo.Password = registerInfo.Password.Length > 20 ? registerInfo.Password.Substring(0, 19) : registerInfo.Password;
+            }
+
             if (user != null)
-                {
+            {
                     userId = user.Id;
-                }
+            }
             else
             {
                 user = new AppUser { UserName = userName, Email = registerInfo.Email,
@@ -154,6 +162,16 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
+
+                // Process SSO Auth as Claims if any
+                if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+                {
+                    Enum.TryParse(registerInfo.SSOAuthProvider.ToLower(), out AuthSSOSupported authSSOName);
+                    string authProvider = SSOConstants.validSSOAuthenticator[(int)authSSOName];
+                    string authProviderClaim = SSOConstants.authenticatorClaims[(int)authSSOName];
+                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(authProviderClaim, "true"));
+                }
+
 
                 if (registerInfo.Roles != null)
                 {
@@ -200,6 +218,22 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             if (string.IsNullOrEmpty(urlreferer))
                 return Content($"Username: {user.DisplayUsername}, Email: {user.Email} activated. Thank you.");
             return Redirect(urlreferer);
+        }
+        #endregion
+
+        #region  Verify Email 
+        [Route("{operatorId}/verify-password")]
+        [HttpGet]
+        public async Task<IActionResult> VerifyPassword(int operatorId, string email, string password)
+        {
+            bool passwordOk = false;
+            AppUser appUser = null;
+            if (!string.IsNullOrEmpty(email))
+                appUser = await _dataAccess.GetAppUserOnOperator(email, operatorId);
+            if (appUser == null)
+                return BadRequest(GlobalConstants.ErrPlayerAccountNotExisting);
+            passwordOk = await _userManager.CheckPasswordAsync(appUser, password);
+            return Ok(passwordOk);
         }
         #endregion
 
