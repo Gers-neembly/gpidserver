@@ -9,5 +9,6 @@ namespace Neembly.GPIDServer.SharedServices.Interfaces
         Task<bool> PlayerRegister(AuthTokenInfo authTokenInfo, PlayerRegisterInfo playerRegister);
         Task<bool> PlayerSSORegister(AuthTokenInfo authTokenInfo, SSOPlayerRegister playerRegister);
         Task<bool> PlayerSetStatus(AuthTokenInfo authTokenInfo, PlayerStatusInfo playerStatus);
+        Task<SSOCheckDetailsResult> PlayerSSOCheckDetails(AuthTokenInfo authTokenInfo, SSOCheckPlayerDetails playerSSODetails);
     }
 }
