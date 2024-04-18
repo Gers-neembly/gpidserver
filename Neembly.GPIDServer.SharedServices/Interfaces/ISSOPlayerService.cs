@@ -9,6 +9,7 @@ namespace Neembly.GPIDServer.SharedServices.Interfaces
         Task<bool> RegisterPlayer(SSORegisterInfo registerInfo, SSOUserInfo ssoUserInfo);
         Task<bool> ProcessUserSSOClaim(string authProviderClaim, AppUser user);
         Task<bool> CreateUserFromSSO(SSOPlayerRegisterInfo ssoPlayerRegisterInfo);
+        Task<SSOCheckDetailsResult> CheckSSODetails(SSOCheckPlayerDetails checkPlayerDetails);
         SSOPlayerRegister SetSSOPlayerRegister(SSOUserInfo ssoUserInfo);
     }
 }

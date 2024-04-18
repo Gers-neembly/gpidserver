@@ -59,6 +59,26 @@ namespace Neembly.GPIDServer.SharedServices.SSO
         }
         #endregion
 
+        #region Check Connected Player
+        public async Task<SSOCheckDetailsResult> CheckSSODetails(SSOCheckPlayerDetails checkPlayerDetails)
+        {
+            SSOCheckDetailsResult checkDetailsResult = new SSOCheckDetailsResult { Action = string.Empty, Result = false };
+
+            try
+            {
+                var result = await _playerNetService.PlayerSSOCheckDetails(_authTokenInfo, checkPlayerDetails);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Exception SSOPlayerService.CheckSSODetails", ex);
+                checkDetailsResult.Result = false;
+                return checkDetailsResult;
+            }
+        }
+        #endregion
+
+
         #region Set SSO Player Registration 
         public SSOPlayerRegister SetSSOPlayerRegister(SSOUserInfo ssoUserInfo)
         {
