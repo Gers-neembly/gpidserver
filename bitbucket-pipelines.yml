@@ -50,9 +50,8 @@ pipelines:
           - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
           - sleep 10s
           - echo "Uploading to Server"
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl start neembly-pp-auth.service'
