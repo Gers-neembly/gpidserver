@@ -19,82 +19,61 @@ pipelines:
           - dotnet sonarscanner begin /k:$SONAR_PROJECT_KEY /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_LOGIN_KEY
           - dotnet build
           - dotnet sonarscanner end /d:sonar.login=$SONAR_LOGIN_KEY
-    runner-dev-all:
+    runner-dev-ppauth:
     - variables:
       - name: ServerId
-        description: Enter ServerId (1 or 2) to access
       - name: DeployDB
-        default: No 	  
-        description: Do you like to perform DB Migration
-        allowed-values:
-        - Yes
-        - No
-      - name: Password 	
-        description: Enter password to proceed		
     - step:
         runs-on:
           - self.hosted
           - linux.shell    
-        name: Deploy to DEV-test
-        deployment: test
-        script:
-          - whoami
-          - echo "Manual deploy to DEV-test environment..."
-          - export ASPNETCORE_ENVIRONMENT="Development"
-          - echo $ServerId
-          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
-          - if [ "$ServerId" = "1" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS1 ; fi
-          - if [ "$ServerId" = "2" ]; then export SSH_SERVER_PUBWS=$SSH_SERVER_DEVWS2 ; fi
-          - echo $SSH_SERVER_PUBWS
-          - export SSH_SERVER_PUB_USER=$SSH_USER_DEVWS
-          - export SSH_SERVER_MODE="Debug"
-          - echo $SSH_SERVER_PUB_USER
-          - echo $SSH_SERVER_MODE
-          - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration $SSH_SERVER_MODE
-          - dotnet publish $PROJECT_NAME --configuration $SSH_SERVER_MODE
-          - echo "Uploading to Server"
-          - scp -rC $RUNNER_BUILD_DIR/bin/$SSH_SERVER_MODE/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS:$DEVWS_PUBDIR$FTP_ROOTDIR
-          - scp -rC $RUNNER_BUILD_DIR/*.json $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS:$DEVWS_PUBDIR$FTP_ROOTDIR
-          - sleep 10s
-          - echo "Restarting Service"
-          - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-pp-auth.service'
-          - ssh $SSH_SERVER_PUB_USER@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
-          - sleep 10
-          - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
-          - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-    deploy-dev-scp:
-    - step:
-        name: Deploy to DEV-test
-        deployment: test
+        name: Deploy Dev-PPAuth
+        deployment: sandbox
         caches:
           - dotnetcore
         script:
-          - echo "Manual deploy to DEV-test environment"
-          - export ASPNETCORE_ENVIRONMENT="Development"
+          - echo $ServerId
+          - if [ "$ServerId" = "1" ]; then export SSH_SERVER_DEVWS=$SSH_SERVER_DEVWS1 ; fi
+          - if [ "$ServerId" = "2" ]; then export SSH_SERVER_DEVWS=$SSH_SERVER_DEVWS2 ; fi
+          - echo $SSH_SERVER_DEVWS
+          - if [ "$SSH_SERVER_DEVWS" = "" ]; then exit 1 ; fi
+          - if [ "$ServerId" = "1" ]; then export ENV_DEV_TARGET="Development" ; fi
+          - if [ "$ServerId" = "2" ]; then export ENV_DEV_TARGET="Development2" ; fi
+          - echo $ENV_DEV_TARGET
+          - if [ "$ENV_DEV_TARGET" = "" ]; then exit 1 ; fi
+          - echo "Deploy to Dev-PPAuth"
+          - export ASPNETCORE_ENVIRONMENT=$ENV_DEV_TARGET
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Debug
-          - dotnet publish $PROJECT_NAME --configuration Debug
+          - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Debug
+          - echo "Stopping Service"
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl stop neembly-pp-auth.service'
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
+          - sleep 10s
           - echo "Uploading to Server"
-          - apt-get update && apt-get -y -qq install openssh-client curl
-          - scp -r $DOTNET_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
-          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json
           - sleep 10s
           - echo "Restarting Service"
-          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
-          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
-          - sleep 10
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl start neembly-pp-auth.service'
+          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl start neembly-bitcoingame-auth.service'
+          - sleep 10s
+          - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
           - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-    deploy-sb-ws:
+          - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
+          - dotnet tool restore
+          - dotnet dotnet-ef database update --context CoreDbContext
+          - sleep 10s
+    runner-sandbox-ppauth:
     - variables:
       - name: ServerId
-      - name: Password 		
+      - name: DeployDB
+      - name: Password 	
     - step:
-        name: Deploy SB-WS
+        runs-on:
+          - self.hosted
+          - linux.shell    
+        name: Deploy SB-PPAuth
         deployment: sandbox
         caches:
           - dotnetcore
@@ -110,57 +89,38 @@ pipelines:
           - echo $ENV_SB_TARGET
           - if [ "$ENV_SB_TARGET" = "" ]; then exit 1 ; fi
           - echo "Deploy to SB-WS"
-          - export ASPNETCORE_ENVIRONMENT="Sandbox"
+          - export ASPNETCORE_ENVIRONMENT=$ENV_SB_TARGET
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Sandbox
-          - dotnet publish $PROJECT_NAME --configuration Sandbox
+          - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Sandbox
+          - echo "Stopping Service"
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl stop neembly-pp-auth.service'
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
+          - sleep 10
           - echo "Uploading to Server"
-          - apt-get update && apt-get -y -qq install openssh-client curl
-          - scp -r $DOTNET_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $DOTNET_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json
-          -  if [ "$ServerId" = "2" ]; then scp -r $DB_PROJECT_DIR/connection.$ENV_SB_TARGET.json $DB_PROJECT_DIR/connection.Sandbox.json ; fi
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json
+          - if [ "$ServerId" = "2" ]; then scp -r $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR/connection.$ENV_SB_TARGET.json $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR/connection.Sandbox.json ; fi
           - sleep 10s
           - echo "Restarting Service"
-          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service'
-          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl start neembly-pp-auth.service'
+          - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl start neembly-bitcoingame-auth.service'
           - sleep 10
+          - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
           - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-    deploy-preprod-release:
-    - variables:
-      - name: Password 		
-    - step:
-        name: Deploy SB-Preprod
-        deployment: preprod
-        caches:
-          - dotnetcore
-        script:
-          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
-          - echo "Deploy to SB-Preprod"
-          - export ASPNETCORE_ENVIRONMENT="Preprod"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Preprod
-          - dotnet publish $PROJECT_NAME --configuration Preprod
-          - echo "Uploading to Server"
-          - apt-get update && apt-get -y -qq install openssh-client curl
-          - scp -r $DOTNET_BUILD_DIR/bin/Preprod/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PRWS@$SSH_SERVER_SBBS1:$PRWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_PRWS@$SSH_SERVER_SBBS1:$PRWS_PUBDIR$FTP_ROOTDIR_WS
+          - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
+          - dotnet tool restore
+          - dotnet dotnet-ef database update --context CoreDbContext
           - sleep 10s
-          - echo "Restarting Service"
-          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-pp-auth.service'
-          - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
-          - sleep 10
-          - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-    deploy-prod-alpha-scp:
+    runner-prod-alpha-ppauth:
     - variables:
       - name: ServerId
       - name: Password 		  
       - name: VersionNo
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy ProdAlpha
         deployment: production
         caches:
@@ -175,46 +135,51 @@ pipelines:
           - if [ "$VersionNo" = "" ]; then export VERSION_NUMBER=$BUILD_VERSION ; else export VERSION_NUMBER=$VersionNo ; fi
           - echo $VERSION_NUMBER
           - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
-          - echo "IP Address"
-          - curl ifconfig.me
           - export ASPNETCORE_ENVIRONMENT="Release"
           - export ASPNETCORE_CLUSTER="ClusterAlpha"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
-          - dotnet publish $PROJECT_NAME --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
+          - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
+          - echo "Stopping Service"
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-pp-auth.service'
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
+          - sleep 10s
           - echo "Uploading Server"
           - apt-get update && apt-get -y -qq install openssh-client curl
           - scp -r $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
           - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 10s
           - echo "Restarting Service"
-          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-pp-auth.service'
-          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl restart neembly-bitcoingame-auth.service'
-          - sleep 10
-          - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-pp-auth.service'
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-bitcoingame-auth.service'
+          - sleep 10s
+          - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
           - dotnet ef database update
-    deploy-prod-alpha-database-ppids:
+          - sleep 10s
+    runner-prod-alpha-database:
+    - variables:
+      - name: ServerId
+      - name: Password 		  
+      - name: VersionNo
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy DB ProdAlpha
         deployment: production
         caches:
           - dotnetcore
         script:
           - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
-          - echo "IP Address"
-          - curl ifconfig.me
+          - if [ "$Password" != "$PROD_VAR_PASSWORD" ]; then exit 1 ; fi
           - export ASPNETCORE_ENVIRONMENT="Release"
           - export ASPNETCORE_CLUSTER="ClusterAlpha"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Release /p:AssemblyVersion=$BUILD_VERSION 
-          - dotnet publish $PROJECT_NAME --configuration Release /p:AssemblyVersion=$BUILD_VERSION 
+          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Release /p:AssemblyVersion=$BUILD_VERSION 
           - echo "Updating Database"
-          - cd $DB_PROJECT_DIR
-          - dotnet ef database update
-          - echo "Uploading DateMarker"
-          - echo `date +%m/%d/%Y-%H:%M:%S` > builddate.txt
-          - ncftpput -a -v -u $ALPHA_WS1_USER -p $ALPHA_WS1_PWD $FTP_URL_WS_PROD $FTP_DEPLOYDIR builddate.txt
+          - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
+          - dotnet tool restore
+          - dotnet dotnet-ef database update --context CoreDbContext
+          - sleep 10s
   default:
     # task per ticket item build
     - step:
@@ -225,11 +190,14 @@ pipelines:
           - echo "Hosted Runner compilation..."
           - echo "Branch building..."
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Debug
+          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Debug
   branches:
     master:
     # master push-merge build 
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy to test
         caches:
           - dotnetcore
@@ -237,11 +205,14 @@ pipelines:
           - echo "Development deploy"
           - export ASPNETCORE_ENVIRONMENT="Development"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Debug
+          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Debug
           - echo "Select pipeline deploy-to-dev to promote DEV environment manually"
     sandbox:
     # sandbox push-merge build 
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy to sandbox
         caches:
           - dotnetcore
@@ -249,11 +220,14 @@ pipelines:
           - echo "Auto Deployment CI/CD to UAT-sandbox environment"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Sandbox 
+          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Sandbox 
           - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
     preprod:
     # pre production push-merge build 
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy to pre-production
         caches:
           - dotnetcore
@@ -261,11 +235,14 @@ pipelines:
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Release
+          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Release
           - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"		  		  
     release:
     # production push-merge build 
     - step:
+        runs-on:
+          - self.hosted
+          - linux.shell    
         name: Deploy to production
         caches:
           - dotnetcore
@@ -274,5 +251,5 @@ pipelines:
           - export ASPNETCORE_ENVIRONMENT="Release"
           - export ASPNETCORE_CLUSTER="Sandbox"
           - dotnet restore
-          - dotnet build $PROJECT_NAME --configuration Release 
+          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Release 
           - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"
