@@ -28,7 +28,7 @@ pipelines:
           - self.hosted
           - linux.shell    
         name: Deploy Dev-PPAuth
-        deployment: sandbox
+        deployment: test
         caches:
           - dotnetcore
         script:
