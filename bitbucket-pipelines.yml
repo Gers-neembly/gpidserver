@@ -111,7 +111,7 @@ pipelines:
           - dotnet tool restore
           - dotnet dotnet-ef database update 
           - sleep 10s
-    runner-prod-alpha-ppauth:
+    runner-alpha-prod-ppauth:
     - variables:
       - name: ServerId
       - name: Password 		  
@@ -154,7 +154,7 @@ pipelines:
           - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
           - dotnet ef database update
           - sleep 10s
-    runner-prod-alpha-database:
+    runner-alpha-prod-database:
     - variables:
       - name: ServerId
       - name: Password 		  
