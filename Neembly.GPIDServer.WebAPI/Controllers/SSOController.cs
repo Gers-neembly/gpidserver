@@ -162,8 +162,8 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         #endregion
 
         #region Add SSO Claim
-        [Route("add/{operatorId}/{authProvider}")]
-        [HttpPost]
+        [Route("add-claim/{operatorId}/{authProvider}")]
+        [HttpGet]
         public async Task<bool> AddSSOClaim(int operatorId, string authProvider, [FromQuery] string email)
         {
             int authProviderIndex = Array.IndexOf(SSOConstants.validSSOAuthenticator, authProvider);
