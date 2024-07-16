@@ -75,7 +75,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         }
         #endregion
 
-
         #region Facebook Login Authentication
         [Authorize(AuthenticationSchemes = FacebookDefaults.AuthenticationScheme)]
         [Route("{operatorId}/login-facebook")]
@@ -86,7 +85,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Redirect(ConstructRedirect(returnUrl, playerAuthResult));
         }
         #endregion
-
 
         #region Common SSO Login Authentication
         private async Task<oAuthResult> SSOLoginAuthentication(int operatorId, AuthSSOSupported authSSOName)
@@ -160,6 +158,19 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 playerAuthResult.result = false;
             }
             return playerAuthResult;
+        }
+        #endregion
+
+        #region Add SSO Claim
+        [Route("add/{operatorId}/{authProvider}")]
+        [HttpPost]
+        public async Task<bool> AddSSOClaim(int operatorId, string authProvider, [FromQuery] string email)
+        {
+            int authProviderIndex = Array.IndexOf(SSOConstants.validSSOAuthenticator, authProvider);
+            if (authProviderIndex < 0) return false; 
+            string authProviderClaim = SSOConstants.authenticatorClaims[authProviderIndex];
+            var emailAppUser = await _dataAccess.GetAppUserOnOperator(email, operatorId);
+            return await _ssoPlayerService.ProcessUserSSOClaim(authProviderClaim, emailAppUser);
         }
         #endregion
 
