@@ -38,11 +38,14 @@ namespace Neembly.GPIDServer.WebAPI.Validator
             AppUser user = null;
             if (this.IsValidEmail(context.UserName))
                 user = _context.Users.Where(p => p.Email.ToLower() == context.UserName.ToLower() && p.OperatorId == Convert.ToInt32(operatorId)).FirstOrDefault();
-            else if (string.IsNullOrEmpty(email))
-                user = _context.Users.Where(p => p.UserName.ToLower() == userName.ToLower()).FirstOrDefault();
+            else if (!string.IsNullOrEmpty(email) && string.IsNullOrEmpty(context.UserName))
+                user = _context.Users.Where(p => p.Email.ToLower() == email.ToLower() && p.OperatorId == Convert.ToInt32(operatorId)).FirstOrDefault();
+            else if (string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(context.UserName))
+                user = _context.Users.Where(p => p.UserName.ToLower() == userName.ToLower() && p.OperatorId == Convert.ToInt32(operatorId)).FirstOrDefault();
             else
                 user = _context.Users.Where(p => p.UserName.ToLower() == userName.ToLower()
-                                            && p.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+                                            && p.Email.ToLower() == email.ToLower()
+                                            && p.OperatorId == Convert.ToInt32(operatorId)).FirstOrDefault();
             if (user != null)
             {
                 bool passwordOk = false;
