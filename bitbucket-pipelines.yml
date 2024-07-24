@@ -25,6 +25,7 @@ pipelines:
       - name: DeployDB
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy Dev-PPAuth
@@ -70,6 +71,7 @@ pipelines:
       - name: Password 	
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy SB-PPAuth
@@ -118,6 +120,7 @@ pipelines:
       - name: VersionNo
     - step:
         runs-on:
+          - prod.runners
           - self.hosted
           - linux.shell    
         name: Deploy ProdAlpha
@@ -161,6 +164,7 @@ pipelines:
       - name: VersionNo
     - step:
         runs-on:
+          - prod.runners
           - self.hosted
           - linux.shell    
         name: Deploy DB ProdAlpha
@@ -183,6 +187,7 @@ pipelines:
     # task per ticket item build
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         script:
@@ -195,6 +200,7 @@ pipelines:
     # master push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to test
@@ -210,6 +216,7 @@ pipelines:
     # sandbox push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to sandbox
@@ -225,6 +232,7 @@ pipelines:
     # pre production push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to pre-production
@@ -240,6 +248,7 @@ pipelines:
     # production push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to production
