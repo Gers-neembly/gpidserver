@@ -153,9 +153,6 @@ pipelines:
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-pp-auth.service'
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-bitcoingame-auth.service'
           - sleep 10s
-          - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
-          - dotnet ef database update
-          - sleep 10s
     runner-alpha-prod-database:
     - variables:
       - name: ServerId
