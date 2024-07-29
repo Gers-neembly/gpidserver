@@ -127,6 +127,22 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             }
         }
 
+        #region Check if Valid Email
+        public bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        #endregion
+
+
         #region Private Methods
         private AppUser CheckOperatorAssignment(string netUserId, int operatorId)
         {
@@ -134,6 +150,7 @@ namespace Neembly.GPIDServer.Persistence.Helpers
                                                     && r.OperatorId == operatorId).FirstOrDefault();
         }
         #endregion
+
 
         #region Get User by OperatorId and PlayerId
         public async Task<AppUser> GetUserByOperatorIdAndPlayerIdAsync(int operatorId, int playerId)
