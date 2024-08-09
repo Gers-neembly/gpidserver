@@ -141,6 +141,8 @@ pipelines:
           - export ASPNETCORE_CLUSTER="ClusterAlpha"
           - dotnet restore
           - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
+          - echo "Performing backup archieve..."
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS cp -ax $PUBWS_PUBDIR$FTP_ROOTDIR_WS $PUBWS_PUBDIR$BACKUPROOT$FTP_ROOTDIR_WS          
           - echo "Stopping Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-pp-auth.service'
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
