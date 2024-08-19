@@ -229,7 +229,12 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             bool passwordOk = false;
             AppUser appUser = null;
             if (!string.IsNullOrEmpty(email))
-                appUser = await _dataAccess.GetAppUserOnOperator(email, operatorId);
+            {
+                if (_dataAccess.IsValidEmail(email))
+                    appUser = await _dataAccess.GetAppUserOnOperator(email, operatorId); //try email on this operator
+                else
+                    appUser = await _dataAccess.GetAppUser($"{email}_{operatorId}"); // possible username on this operator
+            }
             if (appUser == null)
                 return BadRequest(GlobalConstants.ErrPlayerAccountNotExisting);
             passwordOk = await _userManager.CheckPasswordAsync(appUser, password);
