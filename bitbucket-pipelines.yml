@@ -25,6 +25,7 @@ pipelines:
       - name: DeployDB
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy Dev-PPAuth
@@ -70,6 +71,7 @@ pipelines:
       - name: Password 	
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy SB-PPAuth
@@ -118,6 +120,7 @@ pipelines:
       - name: VersionNo
     - step:
         runs-on:
+          - prod.runners
           - self.hosted
           - linux.shell    
         name: Deploy ProdAlpha
@@ -138,21 +141,19 @@ pipelines:
           - export ASPNETCORE_CLUSTER="ClusterAlpha"
           - dotnet restore
           - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
+          - echo "Performing backup archieve..."
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS cp -ax $PUBWS_PUBDIR$FTP_ROOTDIR_WS $PUBWS_PUBDIR$BACKUPROOT$FTP_ROOTDIR_WS          
           - echo "Stopping Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-pp-auth.service'
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
           - sleep 10s
           - echo "Uploading Server"
-          - apt-get update && apt-get -y -qq install openssh-client curl
-          - scp -r $DOTNET_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $DOTNET_BUILD_DIR/*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-pp-auth.service'
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-bitcoingame-auth.service'
-          - sleep 10s
-          - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
-          - dotnet ef database update
           - sleep 10s
     runner-alpha-prod-database:
     - variables:
@@ -161,6 +162,7 @@ pipelines:
       - name: VersionNo
     - step:
         runs-on:
+          - prod.runners
           - self.hosted
           - linux.shell    
         name: Deploy DB ProdAlpha
@@ -183,6 +185,7 @@ pipelines:
     # task per ticket item build
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         script:
@@ -195,6 +198,7 @@ pipelines:
     # master push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to test
@@ -210,6 +214,7 @@ pipelines:
     # sandbox push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to sandbox
@@ -225,6 +230,7 @@ pipelines:
     # pre production push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to pre-production
@@ -240,6 +246,7 @@ pipelines:
     # production push-merge build 
     - step:
         runs-on:
+          - sandbox.runners
           - self.hosted
           - linux.shell    
         name: Deploy to production
