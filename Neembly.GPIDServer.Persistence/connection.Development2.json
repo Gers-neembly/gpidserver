@@ -1,5 +1,5 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=dev-db-2-do-user-4395787-0.b.db.ondigitalocean.com;Port=25061;Username=doadmin;Password=AVNS_8BBCOtw7UxlujmMQpqt;Database=gameplatform-pool;Sslmode=Require;Server Compatibility Mode=Redshift;TrustServerCertificate=True;CommandTimeout=300; KeepAlive=300"
+    "DefaultConnection": "Host=dev-db-2-do-user-4395787-0.b.db.ondigitalocean.com;Port=25061;Username=doadmin;Password=AVNS_8BBCOtw7UxlujmMQpqt;Database=ppidentityserver-pool;Sslmode=Require;Server Compatibility Mode=Redshift;TrustServerCertificate=True;CommandTimeout=300; KeepAlive=300"
   }
 }
