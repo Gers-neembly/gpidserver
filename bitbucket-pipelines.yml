@@ -52,7 +52,7 @@ pipelines:
           - sleep 10s
           - echo "Uploading to Server"
           - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl start neembly-pp-auth.service'
@@ -126,7 +126,7 @@ pipelines:
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl stop neembly-pp-auth.service'
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
           - sleep 10
-          - rm -rf $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/*.json
+          - rm -rf $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/appsettings.*.json
           - echo "Uploading to Server"
           - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 5s
@@ -177,7 +177,7 @@ pipelines:
           - sleep 10s
           - echo "Uploading Server"
           - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-pp-auth.service'
