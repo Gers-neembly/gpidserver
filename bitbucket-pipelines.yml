@@ -1,4 +1,4 @@
-# Neembly Gaming Platform, Copyright(C) 2019
+# Neembly Gaming Platform, Copyright(C) 2025
 # Pipeline build definitions
 image: mcr.microsoft.com/dotnet/core/sdk:2.2
 pipelines:
@@ -52,7 +52,7 @@ pipelines:
           - sleep 10s
           - echo "Uploading to Server"
           - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Debug/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.*.json $SSH_USER_DEVWS@$SSH_SERVER_DEVWS:$DEVWS_PUBDIR$FTP_ROOTDIR
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl start neembly-pp-auth.service'
@@ -68,7 +68,13 @@ pipelines:
     - variables:
       - name: ServerId
       - name: DeployDB
-      - name: Password 	
+      - name: Password
+      - name: AppSettings
+        default: "ignore [default]"
+        allowed-values:
+          - "ignore [default]"
+          - "modify with code upload"
+          - "modify appsettings only"
     - step:
         runs-on:
           - sandbox.runners
@@ -80,7 +86,12 @@ pipelines:
           - dotnetcore
         script:
           - echo $ServerId
-          - if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
+          - echo $AppSettings
+          - if [ "$AppSettings" = "ignore [default]" ]; then  
+              if [ "$Password" != "$SBWS_VAR_PASSWORD" ]; then exit 1 ; fi
+            else
+              if [ "$Password" != "$APPSETTINGS_VAR_PASSWORD" ]; then exit 1 ; fi
+            fi
           - if [ "$ServerId" = "1" ]; then export SSH_SERVER_SBWS=$SSH_SERVER_SBWS1 ; fi
           - if [ "$ServerId" = "2" ]; then export SSH_SERVER_SBWS=$SSH_SERVER_SBWS2 ; fi
           - echo $SSH_SERVER_SBWS
@@ -92,21 +103,38 @@ pipelines:
           - echo "Deploy to SB-WS"
           - export ASPNETCORE_ENVIRONMENT=$ENV_SB_TARGET
           - dotnet restore
+          - if [ "$AppSettings" = "modify with code upload" ] || [ "$AppSettings" = "modify appsettings only" ]; then
+               export APPSETTINGS_FILE="appsettings.$ENV_SB_TARGET.json";   
+               export APPSETTINGS_BACKUP="appsettings.$ENV_SB_TARGET.bak";   
+               export APPSETTINGS_CMD1="sudo cp ${SBWS_PUBDIR}${FTP_ROOTDIR_WS}/${APPSETTINGS_FILE} ${SBWS_PUBDIR}${FTP_ROOTDIR_WS}/${APPSETTINGS_BACKUP}";
+               export APPSETTINGS_CMD2="sudo /opt/config-assist/appsettings-change-logger.sh ${SBWS_PUBDIR}${FTP_ROOTDIR_WS}/${APPSETTINGS_FILE}";
+               ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS $APPSETTINGS_CMD1;
+               scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/$APPSETTINGS_FILE $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS;
+               CHK_RESULT=$(ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS $APPSETTINGS_CMD2);
+               echo "${CHK_RESULT}";
+               sleep 3s;
+            fi
+          - if [ "$AppSettings" = "modify appsettings only" ]; then
+               echo "Restarting Service";
+               ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-pp-auth.service';
+               ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl restart neembly-bitcoingame-auth.service';
+               sleep 10s;
+               exit 0;
+            fi
           - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Sandbox
           - echo "Stopping Service"
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl stop neembly-pp-auth.service'
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
           - sleep 10
+          - rm -rf $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/appsettings.*.json
           - echo "Uploading to Server"
           - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Sandbox/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.$ENV_SB_TARGET.json $SSH_USER_SBWS@$SSH_SERVER_SBWS:$SBWS_PUBDIR$FTP_ROOTDIR_WS/appsettings.Sandbox.json
-          - if [ "$ServerId" = "2" ]; then scp -r $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR/connection.$ENV_SB_TARGET.json $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR/connection.Sandbox.json ; fi
-          - sleep 10s
+          - sleep 5s
           - echo "Restarting Service"
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl start neembly-pp-auth.service'
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl start neembly-bitcoingame-auth.service'
           - sleep 10
+        after-script:
           - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
           - echo "Updating Database"
           - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
@@ -149,7 +177,7 @@ pipelines:
           - sleep 10s
           - echo "Uploading Server"
           - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-pp-auth.service'
