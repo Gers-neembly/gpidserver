@@ -247,10 +247,20 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             }
 
             // Check if user exists using either email or phone
-            if (_dataAccess.UserExists(contactInfo, userName, registerInfo.OperatorId))
-                return BadRequest(GlobalConstants.ErrExistingAccount);
+            bool userExists = false;
+            if (!string.IsNullOrEmpty(registerInfo.Email))
+            {
+                userExists = _dataAccess.UserExists(registerInfo.Email, userName, registerInfo.OperatorId);
+                user = _dataAccess.GetAppUser(registerInfo.Email, userName);
+            }
+            else if (!string.IsNullOrEmpty(registerInfo.PhoneNumber))
+            {
+                userExists = _dataAccess.PhoneUserExists(registerInfo.PhoneNumber, userName, registerInfo.OperatorId);
+                user = await _dataAccess.GetAppUserByPhoneOnOperator(registerInfo.PhoneNumber, registerInfo.OperatorId);
+            }
 
-            user = _dataAccess.GetAppUser(contactInfo, userName);
+            if (userExists)
+                return BadRequest(GlobalConstants.ErrExistingAccount);
             string userId = string.Empty;
 
             int newPlayerId = await _dataAccess.GeneratePlayerId(userName, contactInfo, registerInfo.OperatorId);

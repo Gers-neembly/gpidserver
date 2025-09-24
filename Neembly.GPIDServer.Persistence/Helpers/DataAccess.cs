@@ -160,5 +160,19 @@ namespace Neembly.GPIDServer.Persistence.Helpers
                 .FirstOrDefaultAsync();
         }
         #endregion
+
+        #region Phone Number Lookup Methods
+        public async Task<AppUser> GetAppUserByPhoneOnOperator(string phoneNumber, int operatorId)
+        {
+            return await _appDBContext.Users.Where(r => r.PhoneNumber == phoneNumber
+                                             && r.OperatorId == operatorId).FirstOrDefaultAsync();
+        }
+
+        public bool PhoneUserExists(string phoneNumber, string username, int operatorId)
+        {
+            var appUser = _appDBContext.Users.Where(r => (r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase) || r.PhoneNumber == phoneNumber) && r.OperatorId == operatorId).FirstOrDefault();
+            return (appUser == null) ? false : true;
+        }
+        #endregion
     }
 }

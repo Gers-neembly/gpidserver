@@ -18,5 +18,7 @@ namespace Neembly.GPIDServer.Persistence.Interfaces
         bool EmailExists(string email, int operatorId, int playerId);
         Task<AppUser> GetUserByOperatorIdAndPlayerIdAsync(int operatorId, int playerId);
         bool IsValidEmail(string email);
+        Task<AppUser> GetAppUserByPhoneOnOperator(string phoneNumber, int operatorId);
+        bool PhoneUserExists(string phoneNumber, string username, int operatorId);
     }
 }
