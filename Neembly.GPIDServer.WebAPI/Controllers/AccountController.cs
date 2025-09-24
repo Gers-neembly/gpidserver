@@ -9,11 +9,11 @@ using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
 using Neembly.GPIDServer.SharedClasses;
 using Neembly.GPIDServer.SharedServices.Interfaces;
-using Neembly.GPIDServer.WebAPI.Models.Configs;
-using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
 using Neembly.GPIDServer.WebAPI.Filters;
-using Neembly.GPIDServer.WebAPI.Models.DTO.Outputs;
+using Neembly.GPIDServer.WebAPI.Models.Configs;
 using Neembly.GPIDServer.WebAPI.Models.Constants.SSO;
+using Neembly.GPIDServer.WebAPI.Models.DTO.Inputs;
+using Neembly.GPIDServer.WebAPI.Models.DTO.Outputs;
 
 namespace Neembly.GPIDServer.WebAPI.Controllers
 {
@@ -22,6 +22,7 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
     public class AccountController : ControllerBase
     {
         #region Member Variable
+
         private readonly UserDetailConfiguration _userDetailConfiguration;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
@@ -31,9 +32,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         private readonly IPlayerNetService _playerNetServices;
         private readonly ITokenProviderService _tokenProviderServices;
         private readonly AuthClientConfiguration _authConfig;
-        #endregion
+
+        #endregion Member Variable
 
         #region Constructor
+
         public AccountController(
             UserDetailConfiguration userDetailConfiguration,
             UserManager<AppUser> userManager,
@@ -56,11 +59,13 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             _playerNetServices = playerNetServices;
             _tokenProviderServices = tokenProviderServices;
         }
-        #endregion
+
+        #endregion Constructor
 
         #region Actions
 
         #region DeletePlayer
+
         [NeemblyAuthorize]
         [Route("delete")]
         [HttpPost]
@@ -77,9 +82,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var result = await _userManager.DeleteAsync(ppUser);
             return Ok();
         }
-        #endregion
+
+        #endregion DeletePlayer
 
         #region UpdatePlayer
+
         [NeemblyAuthorize]
         [Route("edit")]
         [HttpPost]
@@ -104,9 +111,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var result = await _userManager.UpdateAsync(ppUser);
             return Ok();
         }
-        #endregion
+
+        #endregion UpdatePlayer
 
         #region Register
+
         [NeemblyAuthorize]
         [Route("register")]
         [HttpPost]
@@ -128,33 +137,36 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             user = _dataAccess.GetAppUser(registerInfo.Email, userName);
             string userId = string.Empty;
 
-            int newPlayerId = await _dataAccess.GeneratePlayerId(userName,  registerInfo.Email, registerInfo.OperatorId);
+            int newPlayerId = await _dataAccess.GeneratePlayerId(userName, registerInfo.Email, registerInfo.OperatorId);
             registerInfo.PlayerId = newPlayerId;
 
             if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
             {
-                // this is only a filler...auto password for SSO 
+                // this is only a filler...auto password for SSO
                 registerInfo.Password = $"{newPlayerId}_{registerInfo.UserName}";
                 registerInfo.Password = registerInfo.Password.Length > 20 ? registerInfo.Password.Substring(0, 19) : registerInfo.Password;
             }
 
             if (user != null)
             {
-                    userId = user.Id;
+                userId = user.Id;
             }
             else
             {
-                user = new AppUser { UserName = userName, Email = registerInfo.Email,
-                                        DisplayUsername = registerInfo.UserName,
-                                        PlayerId = registerInfo.PlayerId,
-                                        OperatorId = registerInfo.OperatorId,
-                                        RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
-                                   };
+                user = new AppUser
+                {
+                    UserName = userName,
+                    Email = registerInfo.Email,
+                    DisplayUsername = registerInfo.UserName,
+                    PlayerId = registerInfo.PlayerId,
+                    OperatorId = registerInfo.OperatorId,
+                    RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
+                };
                 var result = await _userManager.CreateAsync(user, registerInfo.Password);
                 if (!result.Succeeded)
                     return NotFound(GlobalConstants.ErrCreateAccount);
 
-                var avatarImage =  string.IsNullOrEmpty(registerInfo.Avatar) ? _userDetailConfiguration.AvatarInfo.DefaultUrl
+                var avatarImage = string.IsNullOrEmpty(registerInfo.Avatar) ? _userDetailConfiguration.AvatarInfo.DefaultUrl
                                   : registerInfo.Avatar;
 
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
@@ -171,7 +183,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                     string authProviderClaim = SSOConstants.authenticatorClaims[(int)authSSOName];
                     await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(authProviderClaim, "true"));
                 }
-
 
                 if (registerInfo.Roles != null)
                 {
@@ -191,17 +202,159 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
 
             var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                                            var callbackUrl = Url.Action(
-                                            "verifyemail", "account",
-                                            values: new { userId = user.Id, code = emailConfirmationToken,
-                                                          playerId = newPlayerId, operatorId = registerInfo.OperatorId,
-                                                          urlreferer = urlReferer, urlhosted = registerInfo.HostedUrl},
-                                                          protocol: Request.Scheme);
+            var callbackUrl = Url.Action(
+            "verifyemail", "account",
+            values: new
+            {
+                userId = user.Id,
+                code = emailConfirmationToken,
+                playerId = newPlayerId,
+                operatorId = registerInfo.OperatorId,
+                urlreferer = urlReferer,
+                urlhosted = registerInfo.HostedUrl
+            },
+                          protocol: Request.Scheme);
             return Ok(newPlayerId);
         }
-        #endregion
 
-        #region  Verify Email 
+        #endregion Register
+
+        #region Flexible Register
+
+        /// <summary>
+        /// Flexible registration endpoint that supports either email-only or phone-only registration.
+        /// This endpoint was copied from the original Register method and modified to support
+        /// consolidated phone/email registration where only one contact method is required.
+        ///
+        /// Flow:
+        /// - Email registration: Generates email verification token and callback URL (but is not used)
+        /// - Phone registration: Assumes phone was already verified via OTP flow, marks as verified immediately
+        /// </summary>
+        [NeemblyAuthorize]
+        [Route("register-flexible")]
+        [HttpPost]
+        public async Task<IActionResult> FlexibleRegister([FromBody] FlexibleRegisterDTO registerInfo)
+        {
+            AppUser user = null;
+            string urlReferer = Request.Headers["Origin"].ToString();
+            string userName = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
+            string contactInfo = !string.IsNullOrEmpty(registerInfo.Email) ? registerInfo.Email : registerInfo.PhoneNumber;
+
+            if ((!registerInfo.BoUser) && (string.IsNullOrEmpty(registerInfo.SSOAuthProvider)))
+            {
+                if (registerInfo.Password != registerInfo.ConfirmPassword)
+                    return BadRequest(GlobalConstants.ErrPasswordsMismatch);
+            }
+
+            // Check if user exists using either email or phone
+            if (_dataAccess.UserExists(contactInfo, userName, registerInfo.OperatorId))
+                return BadRequest(GlobalConstants.ErrExistingAccount);
+
+            user = _dataAccess.GetAppUser(contactInfo, userName);
+            string userId = string.Empty;
+
+            int newPlayerId = await _dataAccess.GeneratePlayerId(userName, contactInfo, registerInfo.OperatorId);
+            registerInfo.PlayerId = newPlayerId;
+
+            if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+            {
+                registerInfo.Password = $"{newPlayerId}_{registerInfo.UserName}";
+                registerInfo.Password = registerInfo.Password.Length > 20 ? registerInfo.Password.Substring(0, 19) : registerInfo.Password;
+            }
+
+            if (user != null)
+            {
+                userId = user.Id;
+            }
+            else
+            {
+                user = new AppUser
+                {
+                    UserName = userName,
+                    Email = registerInfo.Email,
+                    PhoneNumber = registerInfo.PhoneNumber,
+                    DisplayUsername = registerInfo.UserName,
+                    PlayerId = registerInfo.PlayerId,
+                    OperatorId = registerInfo.OperatorId,
+                    RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
+                };
+
+                var result = await _userManager.CreateAsync(user, registerInfo.Password);
+                if (!result.Succeeded)
+                    return NotFound(GlobalConstants.ErrCreateAccount);
+
+                var avatarImage = string.IsNullOrEmpty(registerInfo.Avatar) ? _userDetailConfiguration.AvatarInfo.DefaultUrl : registerInfo.Avatar;
+
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
+
+                // Add appropriate contact claim
+                if (!string.IsNullOrEmpty(registerInfo.Email))
+                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
+                else
+                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("phoneNumber", user.PhoneNumber));
+
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
+
+                if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+                {
+                    Enum.TryParse(registerInfo.SSOAuthProvider.ToLower(), out AuthSSOSupported authSSOName);
+                    string authProvider = SSOConstants.validSSOAuthenticator[(int)authSSOName];
+                    string authProviderClaim = SSOConstants.authenticatorClaims[(int)authSSOName];
+                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(authProviderClaim, "true"));
+                }
+
+                if (registerInfo.Roles != null)
+                {
+                    foreach (var roleItem in registerInfo.Roles)
+                        await CreateUserRoles(user, roleItem);
+                }
+                userId = user.Id;
+            }
+
+            if (registerInfo.BoUser)
+            {
+                return Ok(newPlayerId);
+            }
+
+            if (user != null)
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", newPlayerId.ToString()));
+
+            if (!string.IsNullOrEmpty(registerInfo.Email))
+            {
+                // Email registration - generate verification email
+                await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
+
+                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var callbackUrl = Url.Action(
+                    "verifyemail", "account",
+                    values: new
+                    {
+                        userId = user.Id,
+                        code = emailConfirmationToken,
+                        playerId = newPlayerId,
+                        operatorId = registerInfo.OperatorId,
+                        urlreferer = urlReferer,
+                        urlhosted = registerInfo.HostedUrl
+                    },
+                                  protocol: Request.Scheme);
+            }
+            else if (!string.IsNullOrEmpty(registerInfo.PhoneNumber))
+            {
+                // Phone registration - already verified via OTP before reaching this endpoint
+                user.PhoneNumberConfirmed = true;
+                await _userManager.UpdateAsync(user);
+                await SetRegistrationStatus(userId, RegistrationStatusNames.Verified);
+            }
+
+            return Ok(newPlayerId);
+        }
+
+        #endregion Flexible Register
+
+        #region Verify Email
+
         [Route("verifyemail")]
         [HttpGet]
         public async Task<IActionResult> VerifyEmail(string userId, string code, int playerId, int operatorId, string urlreferer, string urlhosted)
@@ -219,9 +372,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 return Content($"Username: {user.DisplayUsername}, Email: {user.Email} activated. Thank you.");
             return Redirect(urlreferer);
         }
-        #endregion
 
-        #region  Verify Email 
+        #endregion Verify Email
+
+        #region Verify Email
+
         [Route("{operatorId}/verify-password")]
         [HttpGet]
         public async Task<IActionResult> VerifyPassword(int operatorId, string email, string password)
@@ -240,9 +395,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             passwordOk = await _userManager.CheckPasswordAsync(appUser, password);
             return Ok(passwordOk);
         }
-        #endregion
+
+        #endregion Verify Email
 
         #region Create User Roles
+
         private async Task CreateUserRoles(AppUser user, string roleDesired)
         {
             IdentityResult roleResult;
@@ -253,9 +410,11 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             }
             await _userManager.AddToRoleAsync(user, roleDesired);
         }
-        #endregion
+
+        #endregion Create User Roles
 
         #region Token Generator
+
         private AuthTokenInfo GenerateToken(string hostedUrl)
         {
             var ppWebScope = _authConfig.AuthClientInfoList.Where(s => s.ClientId.Equals(GlobalConstants.ApiClientId, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
@@ -268,16 +427,20 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                 ApiScope = ppWebScope.ApiScope
             });
         }
-        #endregion
 
-        #region Create Player 
+        #endregion Token Generator
+
+        #region Create Player
+
         private async Task<bool> CreatePlayerOnProductDB(PlayerRegisterInfo playerRegister, string hostedUrl)
         {
             return await _playerNetServices.PlayerRegister(GenerateToken(hostedUrl), playerRegister);
         }
-        #endregion
+
+        #endregion Create Player
 
         #region Set Status
+
         private async Task<bool> SetPlayerStatusOnProductDB(string username, int playerId, int operatorId, string newStatus, string hostedUrl)
         {
             return await _playerNetServices.PlayerSetStatus(GenerateToken(hostedUrl),
@@ -289,16 +452,20 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
                                                                     ModifiedBy = username
                                                                 });
         }
-        #endregion
 
-        #region Set Registration 
+        #endregion Set Status
+
+        #region Set Registration
+
         private async Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registrationStatus)
         {
             return await _dataAccess.SetRegistrationStatus(userId, registrationStatus);
         }
-        #endregion
+
+        #endregion Set Registration
 
         #region Get Activation Link and Code
+
         [Route("email/verification-link-code")]
         [HttpGet]
         public async Task<IActionResult> GetVerificationLinkAndCodeAsync(int operatorId, int playerId, string operatorDomain)
@@ -306,7 +473,6 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             var result = new EmailVerificationViewModel();
             var user = await _dataAccess.GetUserByOperatorIdAndPlayerIdAsync(operatorId, playerId);
             var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-           
 
             var callbackUrl = $"{HttpContext.Request.Scheme}://{operatorDomain}/verify-email?userId={user.Id}&code={Uri.EscapeDataString(emailConfirmationToken)}&playerId={user.PlayerId}&operatorId={user.OperatorId}&urlreferer={string.Empty}&urlhosted={string.Empty}";
             result.VerificationCode = emailConfirmationToken;
@@ -317,7 +483,9 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
 
             return Ok(result);
         }
-        #endregion
-        #endregion
+
+        #endregion Get Activation Link and Code
+
+        #endregion Actions
     }
 }
