@@ -13,7 +13,7 @@ namespace Neembly.GPIDServer.Persistence.Interfaces
         Task<AppUser> GetAppUser(string username);
         bool UserExists(string email, string username, int operatorId);
         IEnumerable<int> GetPlayersOperators(string netUserId);
-        Task<int> GeneratePlayerId(string userName, string email, int operatorId);
+        Task<int> GeneratePlayerId(string userName, string contactInfo, int operatorId);
         Task<bool> SetRegistrationStatus(string userId, RegistrationStatusNames registerStatus);
         bool EmailExists(string email, int operatorId, int playerId);
         Task<AppUser> GetUserByOperatorIdAndPlayerIdAsync(int operatorId, int playerId);

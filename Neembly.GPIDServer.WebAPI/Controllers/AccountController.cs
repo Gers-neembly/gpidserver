@@ -235,130 +235,73 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> FlexibleRegister([FromBody] FlexibleRegisterDTO registerInfo)
         {
-            AppUser user = null;
-            string urlReferer = Request.Headers["Origin"].ToString();
-            string userName = $"{registerInfo.UserName}_{registerInfo.OperatorId}";
-            string contactInfo = !string.IsNullOrEmpty(registerInfo.Email) ? registerInfo.Email : registerInfo.PhoneNumber;
-
-            if ((!registerInfo.BoUser) && (string.IsNullOrEmpty(registerInfo.SSOAuthProvider)))
+            try
             {
-                if (registerInfo.Password != registerInfo.ConfirmPassword)
-                    return BadRequest(GlobalConstants.ErrPasswordsMismatch);
-            }
+                string urlReferer = Request.Headers["Origin"].ToString();
 
-            // Check if user exists using either email or phone
-            bool userExists = false;
-            if (!string.IsNullOrEmpty(registerInfo.Email))
-            {
-                userExists = _dataAccess.UserExists(registerInfo.Email, userName, registerInfo.OperatorId);
-                user = _dataAccess.GetAppUser(registerInfo.Email, userName);
-            }
-            else if (!string.IsNullOrEmpty(registerInfo.PhoneNumber))
-            {
-                userExists = _dataAccess.PhoneUserExists(registerInfo.PhoneNumber, userName, registerInfo.OperatorId);
-                user = await _dataAccess.GetAppUserByPhoneOnOperator(registerInfo.PhoneNumber, registerInfo.OperatorId);
-            }
+                // Validate contact information
+                var (hasEmail, hasPhone) = ValidateContactInfo(registerInfo);
 
-            if (userExists)
-                return BadRequest(GlobalConstants.ErrExistingAccount);
-            string userId = string.Empty;
+                // Generate username
+                string displayUsername = GenerateDisplayUsername(registerInfo, hasEmail, hasPhone);
+                string userName = $"{displayUsername}_{registerInfo.OperatorId}";
 
-            int newPlayerId = await _dataAccess.GeneratePlayerId(userName, contactInfo, registerInfo.OperatorId);
-            registerInfo.PlayerId = newPlayerId;
-
-            if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
-            {
-                registerInfo.Password = $"{newPlayerId}_{registerInfo.UserName}";
-                registerInfo.Password = registerInfo.Password.Length > 20 ? registerInfo.Password.Substring(0, 19) : registerInfo.Password;
-            }
-
-            if (user != null)
-            {
-                userId = user.Id;
-            }
-            else
-            {
-                user = new AppUser
+                // Validate password if not SSO
+                if (!registerInfo.BoUser && string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
                 {
-                    UserName = userName,
-                    Email = registerInfo.Email,
-                    PhoneNumber = registerInfo.PhoneNumber,
-                    DisplayUsername = registerInfo.UserName,
-                    PlayerId = registerInfo.PlayerId,
-                    OperatorId = registerInfo.OperatorId,
-                    RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending)
-                };
+                    if (registerInfo.Password != registerInfo.ConfirmPassword)
+                        return BadRequest(GlobalConstants.ErrPasswordsMismatch);
+                }
 
-                var result = await _userManager.CreateAsync(user, registerInfo.Password);
-                if (!result.Succeeded)
-                    return NotFound(GlobalConstants.ErrCreateAccount);
+                // Check if user already exists
+                var (userExists, existingUser) = await CheckUserExistence(registerInfo, userName, hasEmail, hasPhone);
+                if (userExists)
+                    return BadRequest(GlobalConstants.ErrExistingAccount);
 
-                var avatarImage = string.IsNullOrEmpty(registerInfo.Avatar) ? _userDetailConfiguration.AvatarInfo.DefaultUrl : registerInfo.Avatar;
+                // Generate player ID
+                string contactInfo = hasEmail ? registerInfo.Email : registerInfo.PhoneNumber;
+                int newPlayerId = await _dataAccess.GeneratePlayerId(userName, contactInfo, registerInfo.OperatorId);
+                registerInfo.PlayerId = newPlayerId;
 
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
-
-                // Add appropriate contact claim
-                if (!string.IsNullOrEmpty(registerInfo.Email))
-                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
-                else
-                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("phoneNumber", user.PhoneNumber));
-
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
-
+                // Handle SSO password generation
                 if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
                 {
-                    Enum.TryParse(registerInfo.SSOAuthProvider.ToLower(), out AuthSSOSupported authSSOName);
-                    string authProvider = SSOConstants.validSSOAuthenticator[(int)authSSOName];
-                    string authProviderClaim = SSOConstants.authenticatorClaims[(int)authSSOName];
-                    await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(authProviderClaim, "true"));
+                    registerInfo.Password = $"{newPlayerId}_{displayUsername}";
+                    registerInfo.Password = registerInfo.Password.Length > 20 ? registerInfo.Password.Substring(0, 19) : registerInfo.Password;
                 }
 
-                if (registerInfo.Roles != null)
+                // Create or use existing user
+                AppUser user = existingUser ?? await CreateNewUser(registerInfo, userName, displayUsername, hasPhone);
+                string userId = user.Id;
+
+                // Add claims for new users
+                if (existingUser == null)
                 {
-                    foreach (var roleItem in registerInfo.Roles)
-                        await CreateUserRoles(user, roleItem);
+                    await AddUserClaims(user, registerInfo, hasEmail, hasPhone);
                 }
-                userId = user.Id;
-            }
 
-            if (registerInfo.BoUser)
-            {
-                return Ok(newPlayerId);
-            }
+                // Handle BoUser scenario
+                if (registerInfo.BoUser)
+                {
+                    return Ok(newPlayerId);
+                }
 
-            if (user != null)
+                // Add player ID claim
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("playerId", newPlayerId.ToString()));
 
-            if (!string.IsNullOrEmpty(registerInfo.Email))
-            {
-                // Email registration - generate verification email
-                await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
+                // Handle verification flow
+                await HandleVerificationFlow(user, registerInfo, userId, newPlayerId, hasEmail, hasPhone, urlReferer);
 
-                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                var callbackUrl = Url.Action(
-                    "verifyemail", "account",
-                    values: new
-                    {
-                        userId = user.Id,
-                        code = emailConfirmationToken,
-                        playerId = newPlayerId,
-                        operatorId = registerInfo.OperatorId,
-                        urlreferer = urlReferer,
-                        urlhosted = registerInfo.HostedUrl
-                    },
-                                  protocol: Request.Scheme);
+                return Ok(newPlayerId);
             }
-            else if (!string.IsNullOrEmpty(registerInfo.PhoneNumber))
+            catch (InvalidOperationException ex)
             {
-                // Phone registration - already verified via OTP before reaching this endpoint
-                user.PhoneNumberConfirmed = true;
-                await _userManager.UpdateAsync(user);
-                await SetRegistrationStatus(userId, RegistrationStatusNames.Verified);
+                return NotFound(ex.Message);
             }
-
-            return Ok(newPlayerId);
+            catch (Exception)
+            {
+                return BadRequest("Registration failed");
+            }
         }
 
         #endregion Flexible Register
@@ -495,6 +438,152 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         }
 
         #endregion Get Activation Link and Code
+
+        #region Flexible Register Helper Methods
+
+        private (bool hasEmail, bool hasPhone) ValidateContactInfo(FlexibleRegisterDTO registerInfo)
+        {
+            bool hasEmail = !string.IsNullOrEmpty(registerInfo.Email);
+            bool hasPhone = !string.IsNullOrEmpty(registerInfo.PhoneNumber);
+            return (hasEmail, hasPhone);
+        }
+
+        private string GenerateDisplayUsername(FlexibleRegisterDTO registerInfo, bool hasEmail, bool hasPhone)
+        {
+            if (!string.IsNullOrEmpty(registerInfo.UserName))
+                return registerInfo.UserName;
+
+            if (hasEmail)
+                return registerInfo.Email.Split('@')[0];
+
+            if (hasPhone)
+                return $"user{registerInfo.PhoneNumber?.Replace("+", "").Replace("-", "").Replace(" ", "")}";
+
+            return "user";
+        }
+
+        private async Task<(bool userExists, AppUser user)> CheckUserExistence(FlexibleRegisterDTO registerInfo, string userName, bool hasEmail, bool hasPhone)
+        {
+            bool userExists = false;
+            AppUser user = null;
+
+            if (hasEmail)
+            {
+                userExists = _dataAccess.UserExists(registerInfo.Email, userName, registerInfo.OperatorId);
+                user = _dataAccess.GetAppUser(registerInfo.Email, userName);
+            }
+            else if (hasPhone)
+            {
+                userExists = _dataAccess.PhoneUserExists(registerInfo.PhoneNumber, userName, registerInfo.OperatorId);
+                user = await _dataAccess.GetAppUserByPhoneOnOperator(registerInfo.PhoneNumber, registerInfo.OperatorId);
+            }
+
+            return (userExists, user);
+        }
+
+        private async Task<AppUser> CreateNewUser(FlexibleRegisterDTO registerInfo, string userName, string displayUsername, bool hasPhone)
+        {
+            var user = new AppUser
+            {
+                UserName = userName,
+                Email = registerInfo.Email,
+                PhoneNumber = registerInfo.PhoneNumber,
+                DisplayUsername = displayUsername,
+                PlayerId = registerInfo.PlayerId,
+                OperatorId = registerInfo.OperatorId,
+                RegistrationStatus = Enum.GetName(typeof(RegistrationStatusNames), RegistrationStatusNames.Pending),
+                EmailConfirmed = false,
+                PhoneNumberConfirmed = hasPhone,
+                TwoFactorEnabled = false,
+                LockoutEnabled = true,
+                AccessFailedCount = 0
+            };
+
+            var result = await _userManager.CreateAsync(user, registerInfo.Password);
+            if (!result.Succeeded)
+                throw new InvalidOperationException(GlobalConstants.ErrCreateAccount);
+
+            return user;
+        }
+
+        private async Task AddUserClaims(AppUser user, FlexibleRegisterDTO registerInfo, bool hasEmail, bool hasPhone)
+        {
+            var avatarImage = string.IsNullOrEmpty(registerInfo.Avatar)
+                ? _userDetailConfiguration.AvatarInfo.DefaultUrl
+                : registerInfo.Avatar;
+
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("username", user.DisplayUsername));
+
+            // Add appropriate contact claims
+            if (hasEmail)
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("email", user.Email));
+            if (hasPhone)
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("phoneNumber", user.PhoneNumber));
+
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("registrationStatus", user.RegistrationStatus));
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("operatorId", registerInfo.OperatorId.ToString()));
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("avatarUrl", avatarImage));
+
+            // Process SSO Auth as Claims if any
+            if (!string.IsNullOrEmpty(registerInfo.SSOAuthProvider))
+            {
+                Enum.TryParse(registerInfo.SSOAuthProvider.ToLower(), out AuthSSOSupported authSSOName);
+                string authProvider = SSOConstants.validSSOAuthenticator[(int)authSSOName];
+                string authProviderClaim = SSOConstants.authenticatorClaims[(int)authSSOName];
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(authProviderClaim, "true"));
+            }
+
+            // Add roles if any
+            if (registerInfo.Roles != null)
+            {
+                foreach (var roleItem in registerInfo.Roles)
+                    await CreateUserRoles(user, roleItem);
+            }
+        }
+
+        private async Task HandleVerificationFlow(AppUser user, FlexibleRegisterDTO registerInfo, string userId, int newPlayerId, bool hasEmail, bool hasPhone, string urlReferer)
+        {
+            if (hasEmail && hasPhone)
+            {
+                // Both email and phone - set phone as verified (assuming OTP was done), email needs verification
+                user.PhoneNumberConfirmed = true;
+                user.EmailConfirmed = false;
+                await _userManager.UpdateAsync(user);
+                await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
+
+                await GenerateEmailConfirmation(user, newPlayerId, registerInfo.OperatorId, urlReferer, registerInfo.HostedUrl);
+            }
+            else if (hasEmail)
+            {
+                // Email only - generate verification email
+                await SetRegistrationStatus(userId, RegistrationStatusNames.Registered);
+                await GenerateEmailConfirmation(user, newPlayerId, registerInfo.OperatorId, urlReferer, registerInfo.HostedUrl);
+            }
+            else if (hasPhone)
+            {
+                // Phone only - already verified via OTP before reaching this endpoint
+                await SetRegistrationStatus(userId, RegistrationStatusNames.Verified);
+            }
+        }
+
+        private async Task GenerateEmailConfirmation(AppUser user, int playerId, int operatorId, string urlReferer, string hostedUrl)
+        {
+            var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var callbackUrl = Url.Action(
+                "verifyemail", "account",
+                values: new
+                {
+                    userId = user.Id,
+                    code = emailConfirmationToken,
+                    playerId = playerId,
+                    operatorId = operatorId,
+                    urlreferer = urlReferer,
+                    urlhosted = hostedUrl
+                },
+                              protocol: Request.Scheme);
+        }
+
+        #endregion Flexible Register Helper Methods
 
         #endregion Actions
     }

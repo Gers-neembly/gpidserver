@@ -19,12 +19,24 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             _appDBContext = appDBContext;
         }
 
-        public async Task<int> GeneratePlayerId(string userName, string email, int operatorId)
+        public async Task<int> GeneratePlayerId(string userName, string contactInfo, int operatorId)
         {
             int resultPlayerId = 0;
 
-            var playerProfile = _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
-                                             && r.UserName.Equals(userName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            // Query by contact info and username - validation should have happened before this method
+            AppUser playerProfile = null;
+            if (contactInfo.Contains("@"))
+            {
+                // Email-based lookup
+                playerProfile = _appDBContext.Users.Where(r => r.Email.ToLower() == contactInfo.ToLower()
+                                                 && r.UserName.Equals(userName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            }
+            else
+            {
+                // Phone-based lookup
+                playerProfile = _appDBContext.Users.Where(r => r.PhoneNumber == contactInfo
+                                                 && r.UserName.Equals(userName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            }
             if (playerProfile != null)
                 resultPlayerId = playerProfile.PlayerId;
             else
