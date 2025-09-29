@@ -105,7 +105,7 @@ namespace Neembly.GPIDServer.Persistence.Helpers
 
         public bool UserExists(string email, string username, int operatorId)
         {
-            var appUser = _appDBContext.Users.Where(r => (r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase) || r.Email.ToLower() == email.ToLower()) && r.OperatorId == operatorId ).FirstOrDefault();
+            var appUser = _appDBContext.Users.Where(r => (r.UserName.ToLower() == username.ToLower() || r.Email.ToLower() == email.ToLower()) && r.OperatorId == operatorId ).FirstOrDefault();
             return (appUser == null) ? false : true;
         }
 
