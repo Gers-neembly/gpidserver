@@ -1,5 +1,4 @@
 ﻿using IdentityModel;
-using IdentityServer4;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
@@ -7,7 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Neembly.GPIDServer.Persistence.Entities;
 using Neembly.GPIDServer.Persistence.Interfaces;
-using Neembly.GPIDServer.WebAPI.Models.Configs;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -50,7 +48,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
             var customClaims = await _userManager.GetClaimsAsync(user);
             claims = claims.Where(claim => context.RequestedClaimTypes.Contains(claim.Type)).ToList();
 
-            claims.Add(new Claim("email", user.Email));
+            claims.Add(new Claim("email", user.Email ?? string.Empty));
             claims.Add(new Claim("username", user.DisplayUsername));
             claims.Add(new Claim("registrationStatus", user.RegistrationStatus));
 
