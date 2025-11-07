@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using IdentityServer4.ResponseHandling;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
@@ -39,6 +40,9 @@ namespace Neembly.GPIDServer.WebAPI
 
             //DI for persistence
             Persistence.DependencyInjection.Add(services);
+            services.AddHttpContextAccessor();
+            services.AddTransient<ITokenResponseGenerator, CustomTokenResponseGenerator>();
+            services.AddHttpClient();
 
         }
 
