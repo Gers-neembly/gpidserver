@@ -19,12 +19,24 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             _appDBContext = appDBContext;
         }
 
-        public async Task<int> GeneratePlayerId(string userName, string email, int operatorId)
+        public async Task<int> GeneratePlayerId(string userName, string contactInfo, int operatorId)
         {
             int resultPlayerId = 0;
 
-            var playerProfile = _appDBContext.Users.Where(r => r.Email.ToLower() == email.ToLower()
-                                             && r.UserName.Equals(userName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            // Query by contact info and username - validation should have happened before this method
+            AppUser playerProfile = null;
+            if (contactInfo.Contains("@"))
+            {
+                // Email-based lookup
+                playerProfile = _appDBContext.Users.Where(r => r.Email.ToLower() == contactInfo.ToLower()
+                                                 && r.UserName.Equals(userName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            }
+            else
+            {
+                // Phone-based lookup
+                playerProfile = _appDBContext.Users.Where(r => r.PhoneNumber == contactInfo
+                                                 && r.UserName.Equals(userName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            }
             if (playerProfile != null)
                 resultPlayerId = playerProfile.PlayerId;
             else
@@ -93,7 +105,7 @@ namespace Neembly.GPIDServer.Persistence.Helpers
 
         public bool UserExists(string email, string username, int operatorId)
         {
-            var appUser = _appDBContext.Users.Where(r => (r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase) || r.Email.ToLower() == email.ToLower()) && r.OperatorId == operatorId ).FirstOrDefault();
+            var appUser = _appDBContext.Users.Where(r => (r.UserName.ToLower() == username.ToLower() || r.Email.ToLower() == email.ToLower()) && r.OperatorId == operatorId ).FirstOrDefault();
             return (appUser == null) ? false : true;
         }
 
@@ -158,6 +170,20 @@ namespace Neembly.GPIDServer.Persistence.Helpers
             return await _appDBContext.Users
                 .Where(o => o.OperatorId == operatorId && o.PlayerId == playerId)
                 .FirstOrDefaultAsync();
+        }
+        #endregion
+
+        #region Phone Number Lookup Methods
+        public async Task<AppUser> GetAppUserByPhoneOnOperator(string phoneNumber, int operatorId)
+        {
+            return await _appDBContext.Users.Where(r => r.PhoneNumber == phoneNumber
+                                             && r.OperatorId == operatorId).FirstOrDefaultAsync();
+        }
+
+        public bool PhoneUserExists(string phoneNumber, string username, int operatorId)
+        {
+            var appUser = _appDBContext.Users.Where(r => (r.UserName.Equals(username, StringComparison.InvariantCultureIgnoreCase) || r.PhoneNumber == phoneNumber) && r.OperatorId == operatorId).FirstOrDefault();
+            return (appUser == null) ? false : true;
         }
         #endregion
     }
