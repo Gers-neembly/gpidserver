@@ -100,6 +100,50 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
             return Unauthorized();
         }
 
+        /// <summary>
+        /// Flexible login endpoint that supports login with either email or phone number.
+        /// This endpoint was copied from the original Login method and modified to support
+        /// consolidated phone/email login where only one contact method is required.
+        ///
+        /// Flow:
+        /// - Email login: Finds user by email and operator, then authenticates
+        /// - Phone login: Finds user by phone number and operator, then authenticates
+        /// </summary>
+        [HttpPost]
+        [Route("login-flexible")]
+        public async Task<IActionResult> FlexibleLogin(FlexibleLoginDTO loginInfo)
+        {
+            AppUser user = null;
+
+            // Find user by email or phone number for the specific operator
+            if (!string.IsNullOrEmpty(loginInfo.Email))
+            {
+                // Login with email
+                user = await _dataAccess.GetAppUserOnOperator(loginInfo.Email, loginInfo.OperatorId);
+            }
+            else if (!string.IsNullOrEmpty(loginInfo.PhoneNumber))
+            {
+                // Login with phone number - use proper phone lookup
+                user = await _dataAccess.GetAppUserByPhoneOnOperator(loginInfo.PhoneNumber, loginInfo.OperatorId);
+            }
+
+            if (user == null)
+                return Unauthorized();
+
+            // Verify password
+            var result = await _signInManager.PasswordSignInAsync(user.UserName, loginInfo.Password, false, false);
+
+            if (result.Succeeded)
+            {
+                if (!string.IsNullOrEmpty(loginInfo.ReturnUrl))
+                    return Redirect(loginInfo.ReturnUrl);
+                else
+                    return Ok(new { Message = "Login successful", PlayerId = user.PlayerId });
+            }
+
+            return Unauthorized();
+        }
+
         private async Task<bool> ValidateSignInCredentials(string username)
         {
             if (!string.IsNullOrEmpty(username))
