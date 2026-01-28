@@ -24,8 +24,8 @@ namespace Neembly.GPIDServer.WebAPI.Services
         #endregion
 
         #region Constructor
-        public IdentityClaimsProfileService(UserManager<AppUser> userManager, 
-            IUserClaimsPrincipalFactory<AppUser> claimsFactory, 
+        public IdentityClaimsProfileService(UserManager<AppUser> userManager,
+            IUserClaimsPrincipalFactory<AppUser> claimsFactory,
             IHostingEnvironment hostingEnvironment,
             IDataAccess dataAccess)
         {
@@ -51,6 +51,8 @@ namespace Neembly.GPIDServer.WebAPI.Services
             claims.Add(new Claim("email", user.Email ?? string.Empty));
             claims.Add(new Claim("username", user.DisplayUsername));
             claims.Add(new Claim("registrationStatus", user.RegistrationStatus));
+            string loginTimestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ");
+            claims.Add(new Claim("loginTimestamp", loginTimestamp));
 
             int index = 1;
             foreach (var itemOperator in operatorList)
@@ -61,7 +63,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
 
             foreach (string role in roles)
                 claims.Add(new Claim(JwtClaimTypes.Role, role));
- 
+
             context.IssuedClaims = claims;
         }
         #endregion
