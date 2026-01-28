@@ -48,7 +48,7 @@ namespace Neembly.GPIDServer.WebAPI.Services
             var customClaims = await _userManager.GetClaimsAsync(user);
             claims = claims.Where(claim => context.RequestedClaimTypes.Contains(claim.Type)).ToList();
 
-            claims.Add(new Claim("email", user.Email));
+            claims.Add(new Claim("email", user.Email ?? string.Empty));
             claims.Add(new Claim("username", user.DisplayUsername));
             claims.Add(new Claim("registrationStatus", user.RegistrationStatus));
             string loginTimestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ");
