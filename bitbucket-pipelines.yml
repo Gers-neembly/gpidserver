@@ -167,17 +167,32 @@ pipelines:
           - echo "Manual deploy to PROD-release environment (ClusterAlpha)"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - export ASPNETCORE_CLUSTER="ClusterAlpha"
+          - if [ "$USE_APPSETTINGS_DYNAMIC_UPLOADER" = true ]; then 
+              export SERVER_ROOT=$APPSETTINGS_PUBROOT;
+              export APPCONFIG_DIR=$SERVER_ROOT/$FTP_ROOTDIR_WS;
+              echo "Clone appsettings from ${APPCONFIG_DIR}";    
+              echo $APPSETTINGS_REPO;
+              eval $(ssh-agent -s);
+              git clone --depth 1 $APPSETTINGS_REPO $CONFIG_REPO;
+              ls $CONFIG_REPO/$APPCONFIG_DIR;   
+              cp $CONFIG_REPO/$APPCONFIG_DIR/*.* $BITBUCKET_CLONE_DIR;
+              rm -rf $CONFIG_REPO;
+            fi    
           - dotnet restore
           - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
-          - echo "Performing backup archieve..."
-          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS cp -ax $PUBWS_PUBDIR$FTP_ROOTDIR_WS $PUBWS_PUBDIR$BACKUPROOT$FTP_ROOTDIR_WS          
+          - export TARGETDIR_DEPLOY=$FTP_ROOTDIR_WS
+          - echo "System creating backup recovery compressed files"
+          - export SSH_BACKUP_CMD="sudo /opt/deploy-assist/create-backup.sh ${TARGETDIR_DEPLOY} ${VERSION_NUMBER}"
+          - echo $SSH_BACKUP_CMD
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS $SSH_BACKUP_CMD            
           - echo "Stopping Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-pp-auth.service'
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
           - sleep 10s
           - echo "Uploading Server"
+          - rm -rf $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/appsettings.*.json
           - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/bin/Release/$DOTNET_FRAMEWORK/$GIT_PUBLISH_DIR/* $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
-          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.*.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
+          - scp -r $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR/appsettings.ClusterAlpha.json $SSH_USER_PUBWS@$SSH_SERVER_PUBWS:$PUBWS_PUBDIR$FTP_ROOTDIR_WS
           - sleep 10s
           - echo "Restarting Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl start neembly-pp-auth.service'
