@@ -152,8 +152,11 @@ pipelines:
             fi    
           - dotnet restore
           - dotnet publish $PROJECT_NAME -p:RunAnalyzers=false --configuration Release /p:AssemblyVersion=$VERSION_NUMBER 
-          - echo "Performing backup archieve..."
-          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS cp -ax $PUBWS_PUBDIR$FTP_ROOTDIR_WS $PUBWS_PUBDIR$BACKUPROOT$FTP_ROOTDIR_WS          
+          - export TARGETDIR_DEPLOY=$FTP_ROOTDIR_WS
+          - echo "System creating backup recovery compressed files"
+          - export SSH_BACKUP_CMD="sudo /opt/deploy-assist/create-backup.sh ${TARGETDIR_DEPLOY} ${VERSION_NUMBER}"
+          - echo $SSH_BACKUP_CMD
+          - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS $SSH_BACKUP_CMD            
           - echo "Stopping Service"
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-pp-auth.service'
           - ssh $SSH_USER_PUBWS@$SSH_SERVER_PUBWS 'sudo systemctl stop neembly-bitcoingame-auth.service'
