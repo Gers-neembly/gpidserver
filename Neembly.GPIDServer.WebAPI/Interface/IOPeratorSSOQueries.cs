@@ -8,5 +8,6 @@ namespace Neembly.GPIDServer.WebAPI.Interface
         GoogleAuthProviderData GetGoogleOperatorSSO(string socialAccountName);
         TelegramAuthProviderData GetTelegramOperatorSSO(string socialAccountName);
         FacebookAuthProviderData GetFacebookOperatorSSO(string socialAccountName);
+        TwitterAuthProviderData GetTwitterOperatorSSO(string socialAccountName);
     }
 }
