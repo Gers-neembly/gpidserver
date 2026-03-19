@@ -20,16 +20,19 @@ namespace Neembly.GPIDServer.WebAPI.Models.DTO.Inputs
                 RuleFor(x => x.Email).EmailAddress().WithMessage(GlobalConstants.ErrEmailFormat);
             });
 
-            // Phone validation when provided
-            When(x => !string.IsNullOrEmpty(x.PhoneNumber), () => {
+            // Phone validation when provided (skip format check for SSO — Twitter UIDs exceed 15 digits)
+            When(x => !string.IsNullOrEmpty(x.PhoneNumber) && string.IsNullOrEmpty(x.SSOAuthProvider), () => {
                 RuleFor(x => x.PhoneNumber).Matches(@"^\+?[1-9]\d{1,14}$").WithMessage("Invalid phone number format");
             });
 
-            RuleFor(x => x.Password).NotNull().NotEmpty().WithMessage(GlobalConstants.ErrPasswordValue)
-                                              .Length(2, 20).WithMessage(GlobalConstants.ErrPasswordLength)
-                                              .Equal(x => x.ConfirmPassword).WithMessage(GlobalConstants.ErrPasswordsMismatch);
-            RuleFor(x => x.ConfirmPassword).NotNull().NotEmpty().WithMessage(GlobalConstants.ErrConfirmPasswordValue)
-                                              .Length(2, 20).WithMessage(GlobalConstants.ErrConfirmPasswordLength);
+            // Password validation only for non-SSO registrations (SSO generates a password internally)
+            When(x => string.IsNullOrEmpty(x.SSOAuthProvider), () => {
+                RuleFor(x => x.Password).NotNull().NotEmpty().WithMessage(GlobalConstants.ErrPasswordValue)
+                                                  .Length(2, 20).WithMessage(GlobalConstants.ErrPasswordLength)
+                                                  .Equal(x => x.ConfirmPassword).WithMessage(GlobalConstants.ErrPasswordsMismatch);
+                RuleFor(x => x.ConfirmPassword).NotNull().NotEmpty().WithMessage(GlobalConstants.ErrConfirmPasswordValue)
+                                                  .Length(2, 20).WithMessage(GlobalConstants.ErrConfirmPasswordLength);
+            });
             RuleFor(x => x.OperatorId).NotNull().NotEmpty().GreaterThan(0);
         }
         #endregion
