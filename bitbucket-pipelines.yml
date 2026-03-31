@@ -147,7 +147,7 @@ pipelines:
               eval $(ssh-agent -s);
               git clone --depth 1 $APPSETTINGS_REPO $CONFIG_REPO;
               ls $CONFIG_REPO/$APPCONFIG_DIR;   
-              cp $CONFIG_REPO/$APPCONFIG_DIR/*.* $BITBUCKET_CLONE_DIR;
+              cp $CONFIG_REPO/$APPCONFIG_DIR/*.* $BITBUCKET_CLONE_DIR/$RUNNER_BUILD_DIR;
               rm -rf $CONFIG_REPO;
             fi    
           - dotnet restore
