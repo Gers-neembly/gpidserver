@@ -252,7 +252,7 @@ pipelines:
         caches:
           - dotnetcore
         script:
-          - /opt/scripts/bin/mirror-script.sh
+          - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - dotnet restore
