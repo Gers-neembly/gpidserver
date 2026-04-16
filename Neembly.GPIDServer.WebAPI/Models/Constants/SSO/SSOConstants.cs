@@ -5,7 +5,8 @@ namespace Neembly.GPIDServer.WebAPI.Models.Constants.SSO
     {
         google = 0,
         telegram = 1,
-        facebook = 2
+        facebook = 2,
+        twitter = 3
     }
 
     public enum AuthSSOActionsToTake
@@ -20,8 +21,8 @@ namespace Neembly.GPIDServer.WebAPI.Models.Constants.SSO
 
     public static class SSOConstants
     {
-        public static string[] validSSOAuthenticator = { "google", "telegram", "facebook"};
-        public static string[] authenticatorClaims = { "authGoogleSSO", "authTelegramSSO", "authFacebookSSO" };
+        public static string[] validSSOAuthenticator = { "google", "telegram", "facebook", "twitter"};
+        public static string[] authenticatorClaims = { "authGoogleSSO", "authTelegramSSO", "authFacebookSSO", "authTwitterSSO" };
 
         public static string[] ssoActions = { "create-new", "authenticate", "connected" };
 
