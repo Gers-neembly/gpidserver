@@ -57,5 +57,17 @@ namespace Neembly.GPIDServer.WebAPI.Queries
             return operatorSSOItems != null ? JsonConvert.DeserializeObject<FacebookAuthProviderData>(operatorSSOItems) : null;
         }
         #endregion
+
+        #region Get Twitter Operator SSO
+        public TwitterAuthProviderData GetTwitterOperatorSSO(string socialAccountName)
+        {
+            if (string.IsNullOrEmpty(socialAccountName)) return null;
+            var authProvider = SSO.twitter.ToString();
+            var operatorSSOItems = _context.OperatorSSO
+                    .Where(a => a.AuthProvider == authProvider && a.IsEnabled && a.SocialAccountName == socialAccountName)
+                    .Select(a => a.Parameters).FirstOrDefault();
+            return operatorSSOItems != null ? JsonConvert.DeserializeObject<TwitterAuthProviderData>(operatorSSOItems) : null;
+        }
+        #endregion
     }
 }

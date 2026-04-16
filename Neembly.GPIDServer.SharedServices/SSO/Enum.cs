@@ -12,6 +12,8 @@ namespace Neembly.GPIDServer.SharedServices.SSO
             telegram,
             [Description("AuthFacebookSSO")]
             facebook,
+            [Description("AuthTwitterSSO")]
+            twitter,
         }
         public enum TokenType
         {

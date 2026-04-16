@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Facebook;
+using Microsoft.AspNetCore.Authentication.Twitter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
@@ -82,6 +83,17 @@ namespace Neembly.GPIDServer.WebAPI.Controllers
         public async Task<IActionResult> LoginFacebook(int operatorId, string returnUrl)
         {
             var playerAuthResult = await this.SSOLoginAuthentication(operatorId, AuthSSOSupported.facebook);
+            return Redirect(ConstructRedirect(returnUrl, playerAuthResult));
+        }
+        #endregion
+
+        #region Twitter Login Authentication
+        [Authorize(AuthenticationSchemes = TwitterDefaults.AuthenticationScheme)]
+        [Route("{operatorId}/login-twitter")]
+        [HttpGet]
+        public async Task<IActionResult> LoginTwitter(int operatorId, string returnUrl)
+        {
+            var playerAuthResult = await this.SSOLoginAuthentication(operatorId, AuthSSOSupported.twitter);
             return Redirect(ConstructRedirect(returnUrl, playerAuthResult));
         }
         #endregion
