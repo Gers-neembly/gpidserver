@@ -220,6 +220,7 @@ pipelines:
         caches:
           - dotnetcore
         script:
+          - /opt/scripts/mirror-script.sh
           - echo "Development deploy"
           - export ASPNETCORE_ENVIRONMENT="Development"
           - dotnet restore
@@ -236,6 +237,7 @@ pipelines:
         caches:
           - dotnetcore
         script:
+          - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to UAT-sandbox environment"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
           - dotnet restore
@@ -252,6 +254,7 @@ pipelines:
         caches:
           - dotnetcore
         script:
+          - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - dotnet restore
@@ -268,6 +271,7 @@ pipelines:
         caches:
           - dotnetcore
         script:
+          - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - export ASPNETCORE_CLUSTER="Sandbox"
