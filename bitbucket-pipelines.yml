@@ -223,7 +223,8 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Development deploy"
           - export ASPNETCORE_ENVIRONMENT="Development"
-          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Debug -v q --no-restore --no-dependencies
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Debug -v q --no-dependencies
           - echo "Select pipeline deploy-to-dev to promote DEV environment manually"
     sandbox_ws1:
     # sandbox push-merge build 
@@ -239,7 +240,8 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to UAT-sandbox environment"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
-          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-dependencies
           - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
     sandbox_ws2:
     # sandbox push-merge build 
@@ -255,7 +257,8 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to UAT-sandbox environment"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
-          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-dependencies
           - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
     sandbox:
     # sandbox push-merge build 
@@ -271,7 +274,8 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to UAT-sandbox environment"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
-          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-dependencies
           - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
     preprod:
     # pre production push-merge build 
@@ -287,7 +291,8 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
-          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Release -v q --no-restore --no-dependencies
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Release -v q --no-dependencies
           - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"		  		  
     release:
     # production push-merge build 
@@ -304,5 +309,6 @@ pipelines:
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - export ASPNETCORE_CLUSTER="Sandbox"
-          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Release -v q --no-dependencies
           - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"
