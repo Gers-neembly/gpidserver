@@ -58,7 +58,7 @@ pipelines:
           - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl start neembly-pp-auth.service'
           - ssh $SSH_USER_DEVWS@$SSH_SERVER_DEVWS 'sudo systemctl start neembly-bitcoingame-auth.service'
           - sleep 10s
-          - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
+          - if [ "$DeployDB" = "N" ]; then exit 0 ; fi
           - echo "Updating Database"
           - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
           - dotnet tool restore
@@ -107,7 +107,7 @@ pipelines:
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl start neembly-pp-auth.service'
           - ssh $SSH_USER_SBWS@$SSH_SERVER_SBWS 'sudo systemctl start neembly-bitcoingame-auth.service'
           - sleep 10
-          - if [ "$DeployDB" = "false" ]; then exit 0 ; fi
+          - if [ "$DeployDB" = "N" ]; then exit 0 ; fi
           - echo "Updating Database"
           - cd $BITBUCKET_CLONE_DIR/$RUNNER_DB_DIR
           - dotnet tool restore
@@ -223,9 +223,40 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Development deploy"
           - export ASPNETCORE_ENVIRONMENT="Development"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Debug
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Debug -v q --no-restore --no-dependencies
           - echo "Select pipeline deploy-to-dev to promote DEV environment manually"
+    sandbox_ws1:
+    # sandbox push-merge build 
+    - step:
+        runs-on:
+          - sandbox.runners
+          - self.hosted
+          - linux.shell    
+        name: Deploy to sandbox
+        caches:
+          - dotnetcore
+        script:
+          - /opt/scripts/mirror-script.sh
+          - echo "Auto Deployment CI/CD to UAT-sandbox environment"
+          - export ASPNETCORE_ENVIRONMENT="Sandbox"
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
+          - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
+    sandbox_ws2:
+    # sandbox push-merge build 
+    - step:
+        runs-on:
+          - sandbox.runners
+          - self.hosted
+          - linux.shell    
+        name: Deploy to sandbox
+        caches:
+          - dotnetcore
+        script:
+          - /opt/scripts/mirror-script.sh
+          - echo "Auto Deployment CI/CD to UAT-sandbox environment"
+          - export ASPNETCORE_ENVIRONMENT="Sandbox"
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
+          - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
     sandbox:
     # sandbox push-merge build 
     - step:
@@ -240,8 +271,7 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to UAT-sandbox environment"
           - export ASPNETCORE_ENVIRONMENT="Sandbox"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Sandbox 
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
           - echo "Select pipeline deploy-sb to promote Sandbox environment manually"
     preprod:
     # pre production push-merge build 
@@ -257,8 +287,7 @@ pipelines:
           - /opt/scripts/mirror-script.sh
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Release
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Release -v q --no-restore --no-dependencies
           - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"		  		  
     release:
     # production push-merge build 
@@ -275,6 +304,5 @@ pipelines:
           - echo "Auto Deployment CI/CD to PROD-release environment"
           - export ASPNETCORE_ENVIRONMENT="Release"
           - export ASPNETCORE_CLUSTER="Sandbox"
-          - dotnet restore
-          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Release 
+          - dotnet build $PROJECT_NAME -p:GenerateFullPaths=true -p:RunAnalyzers=false -c Sandbox -v q --no-restore --no-dependencies
           - echo "Select pipeline deploy-release to promote Preprod/Release environment manually"
