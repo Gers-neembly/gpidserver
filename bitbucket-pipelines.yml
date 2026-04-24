@@ -203,14 +203,33 @@ pipelines:
           - sandbox.runners
           - self.hosted
           - linux.shell    
+        caches:
+          - dotnetcore
         script:
           - echo "Hosted Runner compilation..."
           - echo "Branch building..."
-          - dotnet restore
-          - dotnet build $PROJECT_NAME -p:RunAnalyzers=false --configuration Debug
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -c Debug -m -nr:false -v q -p:GenerateFullPaths=true -p:RunAnalyzers=false -p:NuGetAudit=false -p:DebugType=none -p:DebugSymbols=false
   branches:
     master:
     # master push-merge build 
+    - step:
+        runs-on:
+          - sandbox.runners
+          - self.hosted
+          - linux.shell    
+        name: Deploy to test
+        caches:
+          - dotnetcore
+        script:
+          - /opt/scripts/mirror-script.sh
+          - echo "Development deploy"
+          - export ASPNETCORE_ENVIRONMENT="Development"
+          - dotnet restore $PROJECT_NAME
+          - dotnet build $PROJECT_NAME -c Debug -m -nr:false -v q -p:GenerateFullPaths=true -p:RunAnalyzers=false -p:NuGetAudit=false -p:DebugType=none -p:DebugSymbols=false
+          - echo "Select pipeline deploy-to-dev to promote DEV environment manually"
+    dev_gen2.0:
+    # dev push-merge build 
     - step:
         runs-on:
           - sandbox.runners
